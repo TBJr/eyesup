@@ -30,6 +30,15 @@ describe('generator blocklist on real content (EU-014)', () => {
   it(
     'produces 10_000 lines with no blocklist hits',
     () => {
+      // Mix drill and word kinds so the blocklist path is exercised on every line type,
+      // while keeping CI under the job budget (word-only 10k timed out at 600s on Ubuntu).
+      const kinds = [
+        'key_drill',
+        'pair_drill',
+        'real_words',
+        'pseudo_words',
+        'mixed_review',
+      ] as const;
       const focus = 'e';
       for (let seed = 0; seed < 10_000; seed += 1) {
         const line = generateLine({
@@ -37,7 +46,7 @@ describe('generator blocklist on real content (EU-014)', () => {
           unlockedGroupCount: 8,
           focusChar: focus,
           track: 'adaptive',
-          kind: seed % 2 === 0 ? 'real_words' : 'pseudo_words',
+          kind: kinds[seed % kinds.length],
           letterModel,
           wordList,
           blocklist,
@@ -47,7 +56,7 @@ describe('generator blocklist on real content (EU-014)', () => {
         expect(line.text.length).toBeLessThanOrEqual(60);
       }
     },
-    600_000,
+    900_000,
   );
 });
 
