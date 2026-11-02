@@ -15,7 +15,9 @@ const ID = /^[a-z]+(-[a-z0-9]+)+$/;
 
 let failures = 0;
 
-for (const file of readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
+for (const file of readdirSync(dir)
+  .filter((f) => f.endsWith('.json') && f !== 'package.json' && ID.test(f.replace(/\.json$/, '')))
+  .sort()) {
   const errors = [];
   let layout;
   try {

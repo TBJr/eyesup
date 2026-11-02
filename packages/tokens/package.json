@@ -1,0 +1,13 @@
+{
+  "name": "@eyesup/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.json": "./tokens.json",
+    "./tokens.css": "./tokens.css"
+  },
+  "scripts": {
+    "typecheck": "node -e \"process.exit(0)\""
+  }
+}

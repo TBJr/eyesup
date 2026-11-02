@@ -1,0 +1,12 @@
+{
+  "app": {
+    "name": "EyesUp",
+    "tagline": "Learn to type without looking at the keyboard."
+  },
+  "placeholder": {
+    "title": "EyesUp",
+    "body": "Phase 0 foundation. Practice screens arrive in Phase 1.",
+    "ready": "Tokens and fonts are loaded.",
+    "engineLabel": "engine"
+  }
+}
