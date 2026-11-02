@@ -113,3 +113,12 @@ export const WPM_CHARS_PER_WORD = 5;
 
 /** §04 Curriculum — slowest letter pairs targeted in Chunk (count). */
 export const SLOWEST_PAIR_DRILL_COUNT = 10;
+
+/** §04 Curriculum — spaced review interval doubles up to this many days. */
+export const REVIEW_INTERVAL_MAX_DAYS = 30;
+
+/** §04 Curriculum — minimum confidence for expanding review interval. */
+export const REVIEW_CONFIDENCE_THRESHOLD = 0.9;
+
+/** C9 — default learner goal WPM. */
+export const DEFAULT_GOAL_WPM = 30;

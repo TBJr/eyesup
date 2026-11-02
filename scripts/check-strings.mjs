@@ -25,9 +25,79 @@ function collectSvelte(dir, out = []) {
   return out;
 }
 
+/** Strip balanced `{...}` expressions. */
+function stripMustaches(input) {
+  let out = '';
+  let i = 0;
+  while (i < input.length) {
+    if (input[i] === '{') {
+      let depth = 1;
+      i += 1;
+      while (i < input.length && depth > 0) {
+        if (input[i] === '{') depth += 1;
+        else if (input[i] === '}') depth -= 1;
+        i += 1;
+      }
+      continue;
+    }
+    out += input[i];
+    i += 1;
+  }
+  return out;
+}
+
 /**
- * Strip script/style blocks, then flag text nodes that look like user-visible copy.
- * Allows {expressions}, HTML comments, and whitespace-only text.
+ * Remove tags while respecting quoted attribute values and `{...}` expressions
+ * so `>` inside onclick handlers does not end the tag early.
+ * @param {string} source
+ */
+function stripTags(source) {
+  let out = '';
+  let i = 0;
+  while (i < source.length) {
+    if (source[i] !== '<') {
+      out += source[i];
+      i += 1;
+      continue;
+    }
+    i += 1; // skip <
+    let quote = null;
+    let brace = 0;
+    while (i < source.length) {
+      const ch = source[i];
+      if (quote) {
+        if (ch === quote) quote = null;
+        i += 1;
+        continue;
+      }
+      if (brace > 0) {
+        if (ch === '{') brace += 1;
+        else if (ch === '}') brace -= 1;
+        i += 1;
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        quote = ch;
+        i += 1;
+        continue;
+      }
+      if (ch === '{') {
+        brace = 1;
+        i += 1;
+        continue;
+      }
+      if (ch === '>') {
+        i += 1;
+        break;
+      }
+      i += 1;
+    }
+    out += '\n';
+  }
+  return out;
+}
+
+/**
  * @param {string} source
  */
 function findLiteralText(source) {
@@ -36,14 +106,11 @@ function findLiteralText(source) {
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<!--[\s\S]*?-->/g, '');
 
+  const textOnly = stripMustaches(stripTags(withoutBlocks));
   const hits = [];
-  const textRe = />([^<]+)</g;
-  let match;
-  while ((match = textRe.exec(withoutBlocks))) {
-    const raw = match[1] ?? '';
-    const text = raw.replace(/\{[^}]*\}/g, '').trim();
+  for (const line of textOnly.split(/\n+/)) {
+    const text = line.trim();
     if (!text) continue;
-    // Ignore pure punctuation / digits used as layout chrome.
     if (/^[\d\s.,:;!?/\\|+\-*=#@$%^&()[\]{}'"`~]+$/.test(text)) continue;
     hits.push(text);
   }

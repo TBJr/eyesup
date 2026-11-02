@@ -71,6 +71,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@eyesup/engine':
+        specifier: workspace:*
+        version: link:../engine
       svelte:
         specifier: ^5.0.0
         version: 5.57.3

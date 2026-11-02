@@ -3,10 +3,121 @@
     "name": "EyesUp",
     "tagline": "Learn to type without looking at the keyboard."
   },
-  "placeholder": {
+  "nav": {
+    "today": "Today",
+    "practice": "Practice",
+    "progress": "Progress",
+    "library": "Library",
+    "settings": "Settings",
+    "label": "Main"
+  },
+  "welcome": {
     "title": "EyesUp",
-    "body": "Phase 0 foundation. Practice screens arrive in Phase 1.",
-    "ready": "Tokens and fonts are loaded.",
-    "engineLabel": "engine"
+    "body": "Learn to type with your eyes on the screen. No account needed.",
+    "start": "Press Enter to begin"
+  },
+  "orient": {
+    "title": "Orient",
+    "posture": "Sit tall, wrists soft, screen at eye level.",
+    "home": "Rest your index fingers on the F and J bumps.",
+    "zones": "Each finger stays in its own colour zone.",
+    "eFinger": "E is typed with the left middle finger.",
+    "rFinger": "R is typed with the left index finger.",
+    "oFinger": "O is typed with the right ring finger.",
+    "done": "Press Enter when you are ready",
+    "next": "Press Enter for the next step",
+    "replay": "Replay Orient"
+  },
+  "questions": {
+    "continue": "Press Enter to continue",
+    "toggle": "Number keys toggle; Enter continues"
+  },
+  "probeA": {
+    "title": "Type normally for 45 seconds",
+    "hint": "Look at the screen. Type as you usually do.",
+    "passage": "the quick brown fox jumps over the lazy dog and keeps going with steady hands on the home row today"
+  },
+  "probeB": {
+    "title": "Home position and blind check",
+    "home": "Press the key for the highlighted finger.",
+    "blind": "Keyboard hidden — type by feel.",
+    "homeLabel": "Home check",
+    "passage": "blind typing line with common words here for the probe"
+  },
+  "layouts": {
+    "qwertyUs": "qwerty-us",
+    "qwertyUk": "qwerty-uk",
+    "azertyFr": "azerty-fr"
+  },
+  "controls": {
+    "smaller": "Smaller text",
+    "larger": "Larger text"
+  },
+
+  "result": {
+    "title": "Your starting track",
+    "reason": "Why this track",
+    "layout": "Keyboard layout",
+    "changeLayout": "Change layout",
+    "override": "Choose a different track",
+    "continue": "Press Enter to continue"
+  },
+  "today": {
+    "title": "Today",
+    "start": "Press Enter to start today's session",
+    "streak": "Streak",
+    "days": "days",
+    "nextKeys": "Next keys",
+    "goal": "Goal"
+  },
+  "practice": {
+    "handsReady": "Rest on F and J, then press both together",
+    "paused": "Paused — press Esc to resume",
+    "peek": "Peeking",
+    "capsLock": "Caps Lock is on",
+    "ime": "Finish composing before typing continues",
+    "lineResult": "Line result",
+    "summary": "Session summary",
+    "unlock": "New keys",
+    "unlockStart": "Press Enter to practise",
+    "break": "Time for a short stretch",
+    "breakSkip": "Press Enter to skip",
+    "done": "Done — back to Today",
+    "wpm": "WPM",
+    "accuracy": "Accuracy",
+    "slowest": "Slowest key"
+  },
+  "progress": {
+    "title": "Progress",
+    "placeholder": "Key heatmap and history arrive in a later update."
+  },
+  "library": {
+    "title": "Library",
+    "orient": "Orient lesson"
+  },
+  "settings": {
+    "title": "Settings",
+    "layout": "Layout",
+    "track": "Track",
+    "goal": "Goal WPM",
+    "textSize": "Text size",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeHighContrast": "High contrast",
+    "reducedMotion": "Reduced motion",
+    "sound": "Sound",
+    "export": "Export progress (JSON)",
+    "import": "Import progress",
+    "delete": "Delete everything",
+    "deleteConfirm": "Type DELETE then press Enter to confirm",
+    "saved": "Saved"
+  },
+  "update": {
+    "ready": "A new version is ready. It will load between sessions."
+  },
+  "a11y": {
+    "keyboard": "On-screen keyboard",
+    "typingSurface": "Practice text"
   }
 }

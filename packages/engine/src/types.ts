@@ -1,13 +1,19 @@
 /** Learning track from onboarding placement (§03). */
 export type Track = 'foundations' | 'retrain' | 'adaptive' | 'fluency';
 
-/** Generated practice line kind (§04 lesson anatomy, C18). */
+/** Generated / scheduled practice line kind (§04 lesson anatomy, C18). */
 export type LineKind =
+  | 'warmup'
   | 'key_drill'
   | 'pair_drill'
   | 'pseudo_words'
   | 'real_words'
-  | 'mixed_review';
+  | 'mixed_review'
+  | 'blind_check'
+  | 'cool_down';
+
+/** Guide fade level L0–L3 (§02 / C17). */
+export type GuideLevel = 0 | 1 | 2 | 3;
 
 /** One line of practice text (§04, C13). */
 export interface Line {
@@ -61,18 +67,23 @@ export interface KeyStat {
   timeToTypeMs: number;
   /** Rolling intervals for smoothed median time-to-type. */
   recentIntervalsMs: number[];
-  level: 0 | 1 | 2 | 3;
+  /** Rolling first-attempt correctness (1/0) for fade window (§02 / C17). */
+  recentFirstAttempts: number[];
+  /** Sessions that have included this key (for L0 hold). */
+  sessionsWithKey: number;
+  presses: number;
+  level: GuideLevel;
   lastPractisedIso: string | undefined;
   stableSessions: number;
 }
 
 /** Per pair timing for Chunk-stage drills (§04). */
 export interface PairStat {
-  readonly fromCode: string;
-  readonly toCode: string;
+  readonly pair: string;
   accuracy: number;
   timeToTypeMs: number;
   recentIntervalsMs: number[];
+  count: number;
 }
 
 /** Learner state snapshot used by the scheduler (§04). */
@@ -80,9 +91,13 @@ export interface Learner {
   readonly layoutId: string;
   track: Track;
   targetWpm: number;
+  goalWpm: number;
   unlockedGroupCount: number;
   keys: KeyStat[];
+  pairs: PairStat[];
+  /** 1-based completed session count after a session ends; before first session is 0. */
   sessionCount: number;
+  dailyMinutes: 5 | 12 | 20;
 }
 
 /**
@@ -100,4 +115,6 @@ export interface RawKeyEvent {
   readonly ctrlKey: boolean;
   readonly metaKey: boolean;
   readonly shiftKey: boolean;
+  readonly altGraphKey: boolean;
+  readonly capsLock: boolean;
 }
