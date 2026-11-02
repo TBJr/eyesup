@@ -138,3 +138,5 @@ export type {
   InputAdapterResult,
   InputAdapterState,
 } from './input/index.js';
+
+export { placeLearner, type PlacementInput, type PlacementResult, type Q2Choice } from './placement.js';

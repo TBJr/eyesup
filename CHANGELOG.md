@@ -6,8 +6,12 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ### Added
 
-- Engine mastery fade levels, pair confidence, session scheduler and spaced review (EU-013–EU-016).
+- Web MVP: onboarding, Orient, placement, Today, practice session player, Settings, Keyboard, typing surface, IndexedDB storage, offline service worker (Phase 1 / D1.1–D1.3).
+- Input adapter (engine + DOM bridge) with Playwright keyboard coverage (EU-012).
+- Engine mastery fade levels, pair confidence, session scheduler, spaced review and placement (EU-013–EU-016, EU-010).
 - English practice word list of about 10,000 everyday words from wordfreq (CC BY-SA 4.0), with a rebuilt letter model (EU-003).
+- Beta report script for Gate B JSON exports (EU-052).
+- GitHub Pages publishes the app under `/app/` next to the keyboard test page.
 - Backlog stories for Welcome/Orient, Settings and the beta report script (EU-050–EU-052).
 - pnpm monorepo with apps/web and packages (engine, ui, layouts, content, tokens), CI, Vitest, Playwright, token and size checks (EU-006).
 - English seed word list, phrases, blocklist, letter model and word-list options doc (EU-003 seed; superseded by `words.txt`).

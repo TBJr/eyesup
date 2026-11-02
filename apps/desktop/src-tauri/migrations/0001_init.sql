@@ -20,7 +20,7 @@ CREATE TABLE profile (
   access_profile   TEXT    NOT NULL DEFAULT '{}',         -- JSON: textSize, contrast, reducedMotion, fingerMap, font, sound, theme
   daily_minutes    INTEGER NOT NULL DEFAULT 12 CHECK (daily_minutes IN (5, 12, 20)),
   target_wpm       REAL    NOT NULL,                      -- current unlock target, rises as groups unlock
-  goal_wpm         REAL    NOT NULL DEFAULT 60,
+  goal_wpm         REAL    NOT NULL DEFAULT 30,
   keyboard_shape   TEXT    NOT NULL DEFAULT 'laptop' CHECK (keyboard_shape IN ('laptop', 'full', 'split')),
   reminder_time    TEXT,                                  -- 'HH:MM' local time, NULL = off
   created_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),

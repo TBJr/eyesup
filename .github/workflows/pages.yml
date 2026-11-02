@@ -22,9 +22,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install and build web app
+        env:
+          EYESUP_BASE_PATH: /eyesup/app/
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm tokens
+          pnpm --filter @eyesup/web build
+
       - name: Assemble site
         run: |
-          mkdir -p site/keyboard-test
+          mkdir -p site/keyboard-test site/app
           cat > site/index.html <<'EOF'
           <!doctype html>
           <html lang="en">
@@ -35,11 +52,13 @@ jobs:
           </head>
           <body>
             <h1>EyesUp</h1>
+            <p><a href="./app/">Web app (private beta)</a></p>
             <p><a href="./keyboard-test/">Keyboard test page</a></p>
           </body>
           </html>
           EOF
           cp tools/keyboard-test/index.html site/keyboard-test/index.html
+          cp -R apps/web/dist/. site/app/
 
       - uses: actions/configure-pages@v5
 
