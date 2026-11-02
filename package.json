@@ -11,6 +11,7 @@
     "build": "pnpm tokens && pnpm -r --filter @eyesup/web build",
     "typecheck": "pnpm -r typecheck",
     "lint": "node scripts/check-strings.mjs && pnpm -r --if-present lint",
+    "pretest": "node scripts/patch-vitest-rpc-timeout.mjs",
     "test": "vitest run --coverage",
     "test:e2e": "playwright test",
     "size": "node scripts/size-check.mjs",
