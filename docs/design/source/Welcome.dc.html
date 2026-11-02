@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome to EyesUp</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5BEA}a:hover{color:#1F45C4}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 32px">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#16181D" stroke-width="2.2"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#2F5BEA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13 23 H19" stroke="#16181D" stroke-width="2.2" stroke-linecap="round"></path></svg>
+<span style="font-size: 19px; font-weight: 700">EyesUp</span>
+</div>
+<a href="#" style="font-size: 15px; font-weight: 700; text-decoration: none; padding: 10px 4px">Import progress from a file</a>
+</header>
+<main style="flex: 1; display: flex; justify-content: center; padding: 24px 24px 48px">
+<div style="width: 100%; max-width: 1140px; display: flex; flex-direction: column; gap: 40px">
+<div style="display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
+<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Touch typing, taught properly</span>
+<h1 style="margin: 0; font-size: 52px; line-height: 1.05; font-weight: 700; letter-spacing: -0.03em">Type without looking at the keyboard.</h1>
+<p style="margin: 0; font-size: 19px; line-height: 1.55; color: #3A3F47">EyesUp first finds out how you type today, then teaches what's missing, a few minutes a day. The keyboard on screen fades as your fingers learn, until you don't need it.</p>
+<div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+<button type="button" style="font: inherit; font-size: 18px; font-weight: 700; color: #FFFFFF; background: #2F5BEA; border: none; border-radius: 12px; padding: 16px 28px; min-height: 52px; cursor: pointer; display: flex; align-items: center; gap: 12px">Start the 3-minute check <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 2px 7px; border-radius: 5px; background: rgba(255, 255, 255, 0.2)">Enter</kbd></button>
+</div>
+<span style="font-size: 14px; color: #5B616B">No account. Your progress stays on this device.</span>
+</div>
+<div style="flex: 1 1 520px; min-width: 0; padding: 24px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; justify-content: center; overflow-x: auto">
+<dc-import name="Keyboard" mode="zones" hands="rest" unit="38" numbers="{{ true }}" label="Two hands resting on a keyboard whose keys are coloured by finger" hint-size="566px,282px"></dc-import>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px">
+<div style="padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="#2F5BEA" stroke-width="2.5"></circle><path d="M20 11 V20 L26 24" fill="none" stroke="#16181D" stroke-width="2.5" stroke-linecap="round"></path></svg>
+<span style="font-size: 19px; font-weight: 700">A 3-minute check first</span>
+<span style="font-size: 15px; line-height: 1.5; color: #3A3F47">Six quick questions and two short typing tests decide where you start. Beginners and fast two-finger typists need different things.</span>
+</div>
+<div style="padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="12" width="10" height="16" rx="2" fill="#56B4E9" fill-opacity="0.35" stroke="#56B4E9" stroke-width="2"></rect><rect x="15" y="12" width="10" height="16" rx="2" fill="none" stroke="#B9B5AC" stroke-width="2" stroke-dasharray="3 2"></rect><rect x="27" y="12" width="10" height="16" rx="2" fill="none" stroke="#E4E1DA" stroke-width="1.5" stroke-dasharray="1 3"></rect></svg>
+<span style="font-size: 19px; font-weight: 700">A guide that fades</span>
+<span style="font-size: 15px; line-height: 1.5; color: #3A3F47">Every key starts coloured by finger and fades on its own as you master it. If you start slipping, it comes back.</span>
+</div>
+<div style="padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><line x1="3" y1="14" x2="37" y2="14" stroke="#16181D" stroke-width="2" stroke-dasharray="4 3"></line><path d="M3 34 C14 34 22 22 30 14 L37 8" fill="none" stroke="#2F5BEA" stroke-width="2.5" stroke-linecap="round"></path></svg>
+<span style="font-size: 19px; font-weight: 700">Planned for the slow part</span>
+<span style="font-size: 15px; line-height: 1.5; color: #3A3F47">If you already type by looking, you'll be slower for a while. EyesUp shows you when typing blind overtakes your old speed.</span>
+</div>
+</div>
+</div>
+</main>
+<footer style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; padding: 18px 24px; font-size: 14px; color: #5B616B">
+<span>Works offline after this first visit</span>
+<a href="#" style="text-decoration: none">How we handle your data</a>
+<span>English (US) · QWERTY</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

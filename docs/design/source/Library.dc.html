@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Library</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3A3F47}a:hover{color:#16181D}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-wrap: wrap">
+<nav aria-label="Main" style="flex: 1 1 200px; box-sizing: border-box; padding: 24px 16px; background: #FFFFFF; border-right: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#16181D" stroke-width="2.2"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#2F5BEA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13 23 H19" stroke="#16181D" stroke-width="2.2" stroke-linecap="round"></path></svg>
+<span style="font-size: 18px; font-weight: 700">EyesUp</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; font-size: 15px; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 L12 4 L21 11 V20 H3 Z"></path><path d="M9 20 V14 H15 V20"></path></svg>Today</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; font-size: 15px; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"></path></svg>Practice</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; font-size: 15px; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20 H21"></path><path d="M5 16 L10 11 L13 14 L19 7"></path></svg>Progress</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: #E8EEFD; color: #2F5BEA; font-weight: 700; font-size: 15px; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4 H10 A2 2 0 0 1 12 6 V20 A2 2 0 0 0 10 18 H4 Z"></path><path d="M20 4 H14 A2 2 0 0 0 12 6 V20 A2 2 0 0 1 14 18 H20 Z"></path></svg>Library</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; font-size: 15px; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>Settings</a>
+</div>
+</nav>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+<h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em">Library</h1>
+<span style="font-size: 15px; color: #5B616B">Practise on the text you actually type</span>
+</div>
+<div role="tablist" aria-label="Library sections" style="display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #E4E1DA">
+<button type="button" role="tab" aria-selected="true" style="font: inherit; font-size: 15px; font-weight: 700; color: #2F5BEA; background: none; border: none; border-bottom: 3px solid #2F5BEA; padding: 12px 14px; min-height: 44px; cursor: pointer">Your text</button>
+<button type="button" role="tab" aria-selected="false" style="font: inherit; font-size: 15px; color: #3A3F47; background: none; border: none; border-bottom: 3px solid transparent; padding: 12px 14px; min-height: 44px; cursor: pointer">Code</button>
+<button type="button" role="tab" aria-selected="false" style="font: inherit; font-size: 15px; color: #3A3F47; background: none; border: none; border-bottom: 3px solid transparent; padding: 12px 14px; min-height: 44px; cursor: pointer">Numbers</button>
+<button type="button" role="tab" aria-selected="false" style="font: inherit; font-size: 15px; color: #3A3F47; background: none; border: none; border-bottom: 3px solid transparent; padding: 12px 14px; min-height: 44px; cursor: pointer">Timed tests</button>
+<button type="button" role="tab" aria-selected="false" style="font: inherit; font-size: 15px; color: #3A3F47; background: none; border: none; border-bottom: 3px solid transparent; padding: 12px 14px; min-height: 44px; cursor: pointer">Orient lessons</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<div style="flex: 999 1 420px; min-width: 0; padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<label for="own-text" style="font-size: 18px; font-weight: 700">Paste something you need to type</label>
+<textarea id="own-text" rows="7" style="font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.6; color: #16181D; background: #F6F4EF; border: 1px solid #DAD6CD; border-radius: 10px; padding: 14px; resize: vertical">Thanks for the quick reply. I've attached the revised budget and moved the review to Thursday, 10:30. Let me know if the new figures work for you.</textarea>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<span style="padding: 5px 12px; border-radius: 999px; background: #F1EFEA; font-size: 14px">162 characters</span>
+<span style="padding: 5px 12px; border-radius: 999px; background: #E69F0026; border: 1px solid #E69F00; font-size: 14px">Uses 9 keys you haven't unlocked yet: they'll show with the full guide</span>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #5B616B"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11 V7 A4 4 0 0 1 16 7 V11"></path></svg>Stays on this device. Never uploaded.</span>
+<div style="display: flex; gap: 10px">
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 700; color: #16181D; background: #FFFFFF; border: 1px solid #DAD6CD; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer">Save</button>
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #2F5BEA; border: none; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer">Practise this</button>
+</div>
+</div>
+</div>
+<div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 16px; font-weight: 700">Saved texts</span>
+<sc-for list="{{ saved }}" as="t" hint-placeholder-count="3">
+<a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; text-decoration: none; color: #16181D">
+<span style="font-size: 15px; font-weight: 700">{{ t.title }}</span>
+<span style="font-size: 13px; color: #5B616B">{{ t.meta }}</span>
+</a>
+</sc-for>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      saved: [
+        { title: 'Cover letter draft', meta: '412 words · practised 3 times · best 31 WPM' },
+        { title: 'Weekly update email', meta: '156 words · practised once' },
+        { title: 'Python: list helpers', meta: '38 lines of code · Coder overlay' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

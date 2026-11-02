@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eyesup.app/schema/layout.schema.json",
+  "title": "EyesUp keyboard layout",
+  "description": "One physical keyboard layout: which finger presses each key, what each key types, and the order keys are taught. See docs/layout-format.md. Rules that span several fields (one home key per finger, every learnable key exactly once in learnOrder) are checked by scripts/validate-layouts.mjs.",
+  "type": "object",
+  "required": ["id", "name", "language", "standard", "fingerprint", "keys", "learnOrder"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z0-9]+)+$",
+      "description": "Layout id, also the file name without .json, e.g. qwerty-us."
+    },
+    "name": { "type": "string", "minLength": 1, "description": "Name shown to learners." },
+    "language": { "type": "string", "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$", "description": "BCP-47 language of the practice content." },
+    "standard": { "enum": ["ANSI", "ISO", "JIS"], "description": "Physical key arrangement." },
+    "fingerprint": {
+      "type": "object",
+      "description": "Physical key codes and the character each produces on this layout. Used to detect the layout from live keystrokes.",
+      "minProperties": 3,
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "keys": {
+      "type": "array",
+      "minItems": 40,
+      "items": { "$ref": "#/$defs/key" }
+    },
+    "learnOrder": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Groups of key codes, introduced one group at a time. The first group must contain KeyF and KeyJ.",
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "$ref": "#/$defs/code" }
+      }
+    },
+    "deadKeys": {
+      "type": "object",
+      "description": "For each dead-key accent, the character produced by each following key. A space after the accent produces the accent itself.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]+$",
+      "description": "A KeyboardEvent.code value from the UI Events specification, e.g. KeyF, Semicolon, IntlBackslash."
+    },
+    "character": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The character the key types, a control name (Shift, CapsLock), or Dead:<accent> for a dead key."
+    },
+    "key": {
+      "type": "object",
+      "required": ["code", "row", "width", "finger"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "$ref": "#/$defs/code" },
+        "row": { "type": "integer", "minimum": 0, "maximum": 4, "description": "0 = number row, 4 = space row." },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 7, "description": "Width in key units (1u = one letter key)." },
+        "rowSpan": { "type": "integer", "minimum": 2, "maximum": 2, "description": "Set on the ISO Enter key, which spans two rows." },
+        "finger": {
+          "enum": ["L1", "L2", "L3", "L4", "R1", "R2", "R3", "R4", "T"],
+          "description": "L/R hand; 1 index, 2 middle, 3 ring, 4 little; T thumb."
+        },
+        "base": { "$ref": "#/$defs/character" },
+        "shift": { "$ref": "#/$defs/character" },
+        "altGr": { "$ref": "#/$defs/character" },
+        "home": { "type": "boolean", "description": "Resting key for its finger." },
+        "bump": { "type": "boolean", "description": "Key has a tactile bump (F and J positions)." },
+        "learn": { "type": "boolean", "description": "false for keys never drilled (Tab, Caps Lock, Backspace)." }
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Typing check: type as you normally do</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 32px; border-bottom: 1px solid #E4E1DA; background: #FFFFFF">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#16181D" stroke-width="2.2"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#2F5BEA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13 23 H19" stroke="#16181D" stroke-width="2.2" stroke-linecap="round"></path></svg>
+<span style="font-size: 18px; font-weight: 700">EyesUp</span>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<span style="font-size: 14px; color: #5B616B">Typing check 1 of 2</span>
+<span role="timer" aria-label="31 seconds left" style="display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: #F1EFEA; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#DAD6CD" stroke-width="2"></circle><path d="M8 1.5 A6.5 6.5 0 0 1 14.2 10" fill="none" stroke="#2F5BEA" stroke-width="2"></path></svg>0:31</span>
+</div>
+</header>
+<main style="flex: 1; display: flex; justify-content: center; padding: 48px 24px">
+<div style="width: 100%; max-width: 980px; display: flex; flex-direction: column; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 10px; text-align: center; align-items: center">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Type as you normally do</span>
+<h1 style="margin: 0; font-size: 34px; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em">Look wherever you like. Just type what you see.</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #5B616B; max-width: 620px">This measures your everyday speed, the one we'll help you beat without looking. Don't stop to fix mistakes.</p>
+</div>
+<div style="padding: 36px 40px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E4E1DA; font-family: 'JetBrains Mono', monospace; font-size: 30px; line-height: 50px" aria-label="Practice text">
+<div style="display: flex; flex-wrap: wrap; align-items: center"><span style="color: #16181D">most people learn to type by</span><span style="color: #16181D">&#160;wat</span><span style="color: #D12F45; background: #D12F451F; border-radius: 4px">h</span><span style="display: inline-block; width: 3px; height: 40px; background: #2F5BEA; border-radius: 2px; margin: 0 1px"></span><span style="color: #8A8F98">ing</span></div>
+<div style="color: #8A8F98">their hands, and that habit works</div>
+<div style="color: #8A8F98; opacity: 0.6">until they want to go a little faster</div>
+</div>
+<div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center">
+<span style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E4E1DA; font-size: 14px"><span style="width: 18px; height: 18px; border-radius: 9px; background: #1F8A4C; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700">✓</span>Keyboard detected: English (US) QWERTY</span>
+<span style="padding: 8px 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E4E1DA; font-size: 14px; color: #3A3F47">Your speed appears at the end, not while you type</span>
+<span style="padding: 8px 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E4E1DA; font-size: 14px; color: #3A3F47"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">Esc</kbd> pause</span>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

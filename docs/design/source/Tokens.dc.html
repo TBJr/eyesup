@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>EyesUp design tokens</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1100px; box-sizing: border-box; padding: 48px 56px; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#16181D" stroke-width="2.2"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#2F5BEA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13 23 H19" stroke="#16181D" stroke-width="2.2" stroke-linecap="round"></path></svg>
+<div style="display: flex; flex-direction: column"><span style="font-size: 26px; font-weight: 700; letter-spacing: -0.01em">EyesUp design tokens</span><span style="font-size: 14px; color: #5B616B">One JSON file, shared by the web app and every desktop build</span></div>
+</div>
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">v0.1 · draft</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Finger colours · Okabe–Ito based, always paired with a number</span>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+<div style="padding: 16px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 8px"><span style="width: 48px; height: 48px; border-radius: 10px; background: #E69F00"></span><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #E69F0038; border: 2px solid #E69F00; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">F</span></div>
+<b style="font-size: 15px">1 · Index</b>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B616B">#E69F00 · dark #F2B33D</span>
+</div>
+<div style="padding: 16px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 8px"><span style="width: 48px; height: 48px; border-radius: 10px; background: #56B4E9"></span><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #56B4E938; border: 2px solid #56B4E9; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">D</span></div>
+<b style="font-size: 15px">2 · Middle</b>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B616B">#56B4E9 · dark #7CC6F0</span>
+</div>
+<div style="padding: 16px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 8px"><span style="width: 48px; height: 48px; border-radius: 10px; background: #009E73"></span><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #009E7338; border: 2px solid #009E73; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">S</span></div>
+<b style="font-size: 15px">3 · Ring</b>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B616B">#009E73 · dark #2CC495</span>
+</div>
+<div style="padding: 16px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 8px"><span style="width: 48px; height: 48px; border-radius: 10px; background: #CC79A7"></span><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #CC79A738; border: 2px solid #CC79A7; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">A</span></div>
+<b style="font-size: 15px">4 · Little</b>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B616B">#CC79A7 · dark #DD9CC0</span>
+</div>
+<div style="padding: 16px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 8px"><span style="width: 48px; height: 48px; border-radius: 10px; background: #8A8F98"></span><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #8A8F9838; border: 2px solid #8A8F98"></span></div>
+<b style="font-size: 15px">Thumb</b>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B616B">#8A8F98 · dark #A3A8B0</span>
+</div>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+<div style="padding: 20px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Surfaces, ink, accent, states · light / dark</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #F6F4EF; border: 1px solid #E4E1DA"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #121417"></span><span style="font-size: 13px; line-height: 1.3"><b>page</b><br>#F6F4EF</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #FFFFFF; border: 1px solid #E4E1DA"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #1B1E23"></span><span style="font-size: 13px; line-height: 1.3"><b>card</b><br>#FFFFFF</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #FFFFFF; border: 1px solid #DAD6CD"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #23272E"></span><span style="font-size: 13px; line-height: 1.3"><b>key</b><br>#FFFFFF</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #16181D"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #ECEAE4; border: 1px solid #E4E1DA"></span><span style="font-size: 13px; line-height: 1.3"><b>ink</b><br>#16181D</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #5B616B"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #A3A8B0"></span><span style="font-size: 13px; line-height: 1.3"><b>ink 2</b><br>#5B616B</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #2F5BEA"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #6E8CFF"></span><span style="font-size: 13px; line-height: 1.3"><b>accent</b><br>#2F5BEA</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #1F8A4C"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #4CC27F"></span><span style="font-size: 13px; line-height: 1.3"><b>correct</b><br>#1F8A4C</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #D12F45"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #FF6B7D"></span><span style="font-size: 13px; line-height: 1.3"><b>error</b><br>#D12F45</span></div>
+<div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 36px; border-radius: 6px 0 0 6px; background: #B7791F"></span><span style="width: 22px; height: 36px; margin-left: -8px; border-radius: 0 6px 6px 0; background: #E5A84B"></span><span style="font-size: 13px; line-height: 1.3"><b>warning</b><br>#B7791F</span></div>
+</div>
+</div>
+
+<div style="padding: 20px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Key states</span>
+<div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="position: relative; width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #56B4E938; border: 2px solid #56B4E9; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">E<span style="position: absolute; right: 4px; bottom: 3px; font-size: 9px; color: #5B616B">2</span></span><span style="font-size: 12px">L0</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #56B4E938; border: 1px solid #56B4E980; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">E</span><span style="font-size: 12px">L1</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; border: 1.5px dashed #B9B5AC"></span><span style="font-size: 12px">L2</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; border: 1px dotted #E4E1DA"></span><span style="font-size: 12px">L3</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #ECEAE4; border: 1px solid #E4E1DA; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; color: #A3A8B0">Q</span><span style="font-size: 12px">Locked</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: #56B4E938; border: 2px solid #2F5BEA; box-shadow: 0 0 0 4px rgba(47, 91, 234, 0.25); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">E</span><span style="font-size: 12px">Next key</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: rgb(214, 224, 251); outline: 2px dashed #D12F45; outline-offset: 2px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px">P</span><span style="font-size: 12px">Weak</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 6px; background: rgb(66, 107, 236); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; color: #FFFFFF">J</span><span style="font-size: 12px">Mastered</span></div>
+</div>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+<div style="padding: 20px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Typography</span>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 32px; line-height: 40px; font-weight: 700; letter-spacing: -0.02em">Display 32 / 40</span><span style="font-size: 12px; color: #5B616B">Atkinson Hyperlegible Bold · headings, big numbers</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 16px; line-height: 24px">Body 16 / 24 — designed for legibility, with clearly different I, l and 1.</span><span style="font-size: 12px; color: #5B616B">Atkinson Hyperlegible Regular</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; line-height: 18px; font-weight: 700">Label 13 / 18</span><span style="font-size: 12px; color: #5B616B">Captions, key legends, chips</span></div>
+</div>
+<div style="padding: 20px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Practice text · JetBrains Mono 28 / 40</span>
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 28px; line-height: 40px; display: flex; align-items: center; flex-wrap: wrap"><span style="color: #16181D">said li</span><span style="color: #D12F45; background: #D12F451F; border-radius: 4px">k</span><span style="color: #16181D">e f</span><span style="display: inline-block; width: 3px; height: 34px; background: #2F5BEA; border-radius: 2px; margin: 0 1px"></span><span style="color: #5B616B; opacity: 0.75">ile feel</span></div>
+<div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: #5B616B"><span><b style="color: #16181D">Typed</b> ink</span><span><b style="color: #D12F45">Error</b> red, tinted</span><span><b style="color: #2F5BEA">Caret</b> accent bar</span><span><b>To type</b> secondary</span></div>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+<div style="padding: 20px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Spacing · 4 px base</span>
+<div style="display: flex; align-items: flex-end; gap: 14px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 4px; height: 4px; background: #2F5BEA"></span><span style="font-size: 11px">4</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 8px; height: 8px; background: #2F5BEA"></span><span style="font-size: 11px">8</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 12px; height: 12px; background: #2F5BEA"></span><span style="font-size: 11px">12</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 16px; height: 16px; background: #2F5BEA"></span><span style="font-size: 11px">16</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 24px; height: 24px; background: #2F5BEA"></span><span style="font-size: 11px">24</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 32px; height: 32px; background: #2F5BEA"></span><span style="font-size: 11px">32</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 48px; height: 48px; background: #2F5BEA"></span><span style="font-size: 11px">48</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 64px; height: 64px; background: #2F5BEA"></span><span style="font-size: 11px">64</span></div>
+</div>
+</div>
+<div style="padding: 20px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Radii and key unit</span>
+<div style="display: flex; align-items: flex-end; gap: 20px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 48px; height: 48px; border-radius: 6px; border: 2px solid #16181D; box-sizing: border-box"></span><span style="font-size: 11px">6 · keys</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 64px; height: 48px; border-radius: 12px; border: 2px solid #16181D; box-sizing: border-box"></span><span style="font-size: 11px">12 · cards</span></div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 80px; height: 48px; border-radius: 20px; border: 2px solid #16181D; box-sizing: border-box"></span><span style="font-size: 11px">20 · panels</span></div>
+<span style="font-size: 13px; line-height: 1.45; color: #5B616B; max-width: 220px">1u key = 48 px with a 6 px gap on desktop; the keyboard scales by changing the unit.</span>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

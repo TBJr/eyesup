@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Practice states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1140px; box-sizing: border-box; padding: 44px 48px; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Practice screen · states</span>
+<h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em">Six moments inside a session</h1>
+</div>
+<span style="font-size: 15px; color: #5B616B; max-width: 420px; text-align: right">Each appears over the practice text; none of them uses a pop-up window.</span>
+</div>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 24px">
+
+<section aria-label="Line result strip" style="position: relative; padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">A · After every line</span>
+<div style="flex: 1; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 24px; color: #16181D; opacity: 0.35">sure fire rude user lure</div>
+<div style="padding: 14px 18px; border-radius: 12px; background: #16181D; color: #FFFFFF; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #A3A8B0">Speed</span><span style="font-size: 22px; font-weight: 700">23 <span style="font-size: 13px; color: #A3A8B0">WPM</span></span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #A3A8B0">Accuracy</span><span style="font-size: 22px; font-weight: 700">96%</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #A3A8B0">Slowest</span><span style="font-size: 22px; font-weight: 700">U <span style="font-size: 13px; color: #A3A8B0">312 ms</span></span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: #A3A8B0">Guide</span><span style="font-size: 15px; font-weight: 700; line-height: 1.3">K faded to outline</span></div>
+</div>
+<span style="font-size: 13px; color: #5B616B">Shows for 2 seconds, or until the next key is pressed.</span>
+</section>
+
+<section aria-label="Peek" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px"><span style="font-size: 13px; font-weight: 700; color: #5B616B">B · Holding Ctrl to peek</span><span style="padding: 4px 10px; border-radius: 999px; background: #B7791F1F; border: 1px solid #B7791F; font-size: 12px; font-weight: 700; color: #8A5A12">Peeking: these keys count as guided</span></div>
+<div style="flex: 1; display: flex; align-items: center; justify-content: center"><dc-import name="Keyboard" mode="zones" hands="none" unit="30" target="KeyR" label="Full finger-zone keyboard shown while peeking" hint-size="447px,147px"></dc-import></div>
+<span style="font-size: 13px; color: #5B616B">Every key reappears in full colour while Ctrl is held, then hides again.</span>
+</section>
+
+<section aria-label="Caps Lock warning" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">C · Caps Lock is on</span>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px">
+<div role="alert" style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-radius: 12px; background: #B7791F1A; border: 2px solid #B7791F">
+<span style="width: 34px; height: 30px; box-sizing: border-box; border-radius: 6px; border: 2px solid #8A5A12; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #8A5A12">⇪</span>
+<span style="font-size: 16px; line-height: 1.35"><b>Caps Lock is on.</b> Press it once to carry on.<br><span style="font-size: 14px; color: #5B616B">Nothing is scored until it's off.</span></span>
+</div>
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; display: flex; align-items: center"><span>sure fi</span><span style="display: inline-block; width: 3px; height: 30px; background: #2F5BEA; border-radius: 2px; margin: 0 1px"></span><span style="color: #8A8F98">re rude</span></div>
+</div>
+</section>
+
+<section aria-label="Paused" style="position: relative; padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">D · Paused</span>
+<div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #16181D14">
+<div style="width: 300px; padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; box-shadow: 0 8px 24px rgba(22, 24, 29, 0.12); display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="7" y="5" width="5" height="18" rx="1.5" fill="#16181D"></rect><rect x="16" y="5" width="5" height="18" rx="1.5" fill="#16181D"></rect></svg>
+<span style="font-size: 20px; font-weight: 700">Paused</span>
+<span style="font-size: 14px; color: #5B616B">Line 7 of 24 · 4 minutes done · timer stopped</span>
+<button type="button" style="width: 100%; font: inherit; font-size: 15px; font-weight: 700; color: #FFFFFF; background: #2F5BEA; border: none; border-radius: 10px; padding: 10px; min-height: 44px">Resume · Esc</button>
+<button type="button" style="width: 100%; font: inherit; font-size: 15px; font-weight: 700; color: #16181D; background: #FFFFFF; border: 1px solid #DAD6CD; border-radius: 10px; padding: 10px; min-height: 44px">End and save</button>
+</div>
+</div>
+</section>
+
+<section aria-label="Break card" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">E · Break after 20 minutes</span>
+<div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 28px">
+<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="24 seconds left of a 30-second break"><circle cx="60" cy="60" r="50" fill="none" stroke="#ECEAE4" stroke-width="10"></circle><circle cx="60" cy="60" r="50" fill="none" stroke="#2F5BEA" stroke-width="10" stroke-linecap="round" stroke-dasharray="251 314" transform="rotate(-90 60 60)"></circle><text x="60" y="68" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="24" font-weight="600" fill="#16181D">0:24</text></svg>
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 280px">
+<span style="font-size: 20px; font-weight: 700">Rest your hands for 30 seconds.</span>
+<span style="font-size: 15px; line-height: 1.5; color: #3A3F47">Open and close your hands, roll your wrists, and look at something far away.</span>
+<span style="font-size: 14px; color: #5B616B">Skip with Enter. You'll pick up on the next line.</span>
+</div>
+</div>
+</section>
+
+<section aria-label="Guide steps back" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">F · A key's guide comes back</span>
+<div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 20px">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1.5px dashed #B9B5AC"></span><span style="font-size: 13px; color: #5B616B">I · outline</span></div>
+<svg width="56" height="20" viewBox="0 0 56 20" aria-hidden="true"><path d="M2 10 H48" stroke="#5B616B" stroke-width="2"></path><path d="M44 4 L52 10 L44 16" fill="none" stroke="#5B616B" stroke-width="2" stroke-linejoin="round"></path></svg>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="position: relative; width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; background: #56B4E938; border: 2px solid #56B4E9; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700">I<span style="position: absolute; right: 6px; bottom: 4px; font-size: 11px; color: #5B616B">2</span></span><span style="font-size: 13px; color: #5B616B">I · full guide</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; max-width: 250px">
+<span style="font-size: 17px; font-weight: 700">I needs a little more help.</span>
+<span style="font-size: 14px; line-height: 1.45; color: #3A3F47">Accuracy fell to 88% over its last 40 presses, so its full guide is back for now. This is normal.</span>
+</div>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

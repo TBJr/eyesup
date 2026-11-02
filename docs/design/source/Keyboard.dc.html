@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Finger-zone keyboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div role="img" aria-label="{{ ariaLabel }}" style="position: relative; width: {{ W }}px; height: {{ H }}px; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #16181D">
+<div style="position: absolute; left: 0; top: 0; display: flex; flex-direction: column; gap: {{ g }}px">
+<sc-for list="{{ rows }}" as="row" hint-placeholder-count="5">
+<div style="display: flex; gap: {{ row.g }}px">
+<sc-for list="{{ row.keys }}" as="k" hint-placeholder-count="14">
+<div style="box-sizing: border-box; position: relative; flex: none; display: flex; align-items: center; justify-content: center; {{ k.style }}">
+<span style="display: block; {{ k.labelStyle }}">{{ k.label }}</span>
+<sc-if value="{{ k.showBadge }}" hint-placeholder-val="{{ false }}"><span style="display: block; {{ k.badgeStyle }}">{{ k.badge }}</span></sc-if>
+<sc-if value="{{ k.bump }}" hint-placeholder-val="{{ false }}"><span style="display: block; {{ k.bumpStyle }}"></span></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ showHands }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 804 400" aria-hidden="true" style="position: absolute; left: 0; top: 0; width: {{ W }}px; height: {{ HH }}px; overflow: visible; pointer-events: none">
+<defs>
+<marker id="eu-reach-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{{ accent }}"></path></marker>
+</defs>
+<g opacity="0.92">
+<path d="M112 226 L300 214 Q326 250 312 300 L296 400 L176 400 L150 330 Q110 300 112 226 Z" fill="{{ hand.line }}" stroke="{{ hand.line }}" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M611 226 L423 214 Q397 250 411 300 L427 400 L547 400 L573 330 Q613 300 611 226 Z" fill="{{ hand.line }}" stroke="{{ hand.line }}" stroke-width="3" stroke-linejoin="round"></path>
+<g stroke="{{ hand.line }}" stroke-linecap="round" fill="none">
+<line x1="{{ f.L4.x1 }}" y1="{{ f.L4.y1 }}" x2="{{ f.L4.x2 }}" y2="{{ f.L4.y2 }}" stroke-width="31"></line>
+<line x1="{{ f.L3.x1 }}" y1="{{ f.L3.y1 }}" x2="{{ f.L3.x2 }}" y2="{{ f.L3.y2 }}" stroke-width="31"></line>
+<line x1="{{ f.L2.x1 }}" y1="{{ f.L2.y1 }}" x2="{{ f.L2.x2 }}" y2="{{ f.L2.y2 }}" stroke-width="31"></line>
+<line x1="{{ f.L1.x1 }}" y1="{{ f.L1.y1 }}" x2="{{ f.L1.x2 }}" y2="{{ f.L1.y2 }}" stroke-width="31"></line>
+<line x1="{{ f.R1.x1 }}" y1="{{ f.R1.y1 }}" x2="{{ f.R1.x2 }}" y2="{{ f.R1.y2 }}" stroke-width="31"></line>
+<line x1="{{ f.R2.x1 }}" y1="{{ f.R2.y1 }}" x2="{{ f.R2.x2 }}" y2="{{ f.R2.y2 }}" stroke-width="31"></line>
+<line x1="{{ f.R3.x1 }}" y1="{{ f.R3.y1 }}" x2="{{ f.R3.x2 }}" y2="{{ f.R3.y2 }}" stroke-width="31"></line>
+<line x1="{{ f.R4.x1 }}" y1="{{ f.R4.y1 }}" x2="{{ f.R4.x2 }}" y2="{{ f.R4.y2 }}" stroke-width="31"></line>
+<line x1="290" y1="292" x2="330" y2="246" stroke-width="35"></line>
+<line x1="433" y1="292" x2="393" y2="246" stroke-width="35"></line>
+</g>
+<path d="M112 226 L300 214 Q326 250 312 300 L296 400 L176 400 L150 330 Q110 300 112 226 Z" fill="{{ hand.fill }}"></path>
+<path d="M611 226 L423 214 Q397 250 411 300 L427 400 L547 400 L573 330 Q613 300 611 226 Z" fill="{{ hand.fill }}"></path>
+<g stroke="{{ hand.fill }}" stroke-linecap="round" fill="none">
+<line x1="{{ f.L4.x1 }}" y1="{{ f.L4.y1 }}" x2="{{ f.L4.x2 }}" y2="{{ f.L4.y2 }}" stroke-width="27"></line>
+<line x1="{{ f.L3.x1 }}" y1="{{ f.L3.y1 }}" x2="{{ f.L3.x2 }}" y2="{{ f.L3.y2 }}" stroke-width="27"></line>
+<line x1="{{ f.L2.x1 }}" y1="{{ f.L2.y1 }}" x2="{{ f.L2.x2 }}" y2="{{ f.L2.y2 }}" stroke-width="27"></line>
+<line x1="{{ f.L1.x1 }}" y1="{{ f.L1.y1 }}" x2="{{ f.L1.x2 }}" y2="{{ f.L1.y2 }}" stroke-width="27"></line>
+<line x1="{{ f.R1.x1 }}" y1="{{ f.R1.y1 }}" x2="{{ f.R1.x2 }}" y2="{{ f.R1.y2 }}" stroke-width="27"></line>
+<line x1="{{ f.R2.x1 }}" y1="{{ f.R2.y1 }}" x2="{{ f.R2.x2 }}" y2="{{ f.R2.y2 }}" stroke-width="27"></line>
+<line x1="{{ f.R3.x1 }}" y1="{{ f.R3.y1 }}" x2="{{ f.R3.x2 }}" y2="{{ f.R3.y2 }}" stroke-width="27"></line>
+<line x1="{{ f.R4.x1 }}" y1="{{ f.R4.y1 }}" x2="{{ f.R4.x2 }}" y2="{{ f.R4.y2 }}" stroke-width="27"></line>
+<line x1="290" y1="292" x2="330" y2="246" stroke-width="31"></line>
+<line x1="433" y1="292" x2="393" y2="246" stroke-width="31"></line>
+</g>
+</g>
+<circle cx="{{ reach.gx }}" cy="{{ reach.gy }}" r="12" fill="none" stroke="#5B616B" stroke-width="2" stroke-dasharray="3 3" opacity="{{ reach.op }}"></circle>
+<path d="{{ reach.d }}" fill="none" stroke="{{ accent }}" stroke-width="2.5" stroke-dasharray="6 5" stroke-linecap="round" marker-end="url(#eu-reach-arrow)" opacity="{{ reach.op }}"></path>
+<circle cx="{{ f.L4.x2 }}" cy="{{ f.L4.y2 }}" r="{{ f.L4.r }}" fill="{{ f.L4.fill }}" stroke="{{ f.L4.col }}" stroke-width="{{ f.L4.sw }}"></circle>
+<circle cx="{{ f.L3.x2 }}" cy="{{ f.L3.y2 }}" r="{{ f.L3.r }}" fill="{{ f.L3.fill }}" stroke="{{ f.L3.col }}" stroke-width="{{ f.L3.sw }}"></circle>
+<circle cx="{{ f.L2.x2 }}" cy="{{ f.L2.y2 }}" r="{{ f.L2.r }}" fill="{{ f.L2.fill }}" stroke="{{ f.L2.col }}" stroke-width="{{ f.L2.sw }}"></circle>
+<circle cx="{{ f.L1.x2 }}" cy="{{ f.L1.y2 }}" r="{{ f.L1.r }}" fill="{{ f.L1.fill }}" stroke="{{ f.L1.col }}" stroke-width="{{ f.L1.sw }}"></circle>
+<circle cx="{{ f.R1.x2 }}" cy="{{ f.R1.y2 }}" r="{{ f.R1.r }}" fill="{{ f.R1.fill }}" stroke="{{ f.R1.col }}" stroke-width="{{ f.R1.sw }}"></circle>
+<circle cx="{{ f.R2.x2 }}" cy="{{ f.R2.y2 }}" r="{{ f.R2.r }}" fill="{{ f.R2.fill }}" stroke="{{ f.R2.col }}" stroke-width="{{ f.R2.sw }}"></circle>
+<circle cx="{{ f.R3.x2 }}" cy="{{ f.R3.y2 }}" r="{{ f.R3.r }}" fill="{{ f.R3.fill }}" stroke="{{ f.R3.col }}" stroke-width="{{ f.R3.sw }}"></circle>
+<circle cx="{{ f.R4.x2 }}" cy="{{ f.R4.y2 }}" r="{{ f.R4.r }}" fill="{{ f.R4.fill }}" stroke="{{ f.R4.col }}" stroke-width="{{ f.R4.sw }}"></circle>
+<circle cx="330" cy="246" r="{{ th.r }}" fill="{{ th.fill }}" stroke="#8A8F98" stroke-width="{{ th.sw }}"></circle>
+<circle cx="393" cy="246" r="{{ th.r }}" fill="{{ th.fill }}" stroke="#8A8F98" stroke-width="{{ th.sw }}"></circle>
+</svg>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"unit":{"editor":"int","default":54,"min":30,"max":80,"section":"Size"},"mode":{"editor":"enum","default":"zones","options":["zones","levels","heat","plain"]},"hands":{"editor":"enum","default":"rest","options":["none","rest","reach"]},"target":{"editor":"text","default":""},"numbers":{"editor":"boolean","default":true},"theme":{"editor":"enum","default":"light","options":["light","dark"]},"levels":{"editor":null},"heat":{"editor":null},"label":{"editor":null},"$preview":{"width":804,"height":400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var U = Number(this.props.unit != null ? this.props.unit : 54);
+    var g = Math.max(2, Math.round(U / 9));
+    var mode = this.props.mode || 'zones';
+    var target = this.props.target || '';
+    var handsMode = this.props.hands || 'rest';
+    var levels = this.props.levels || {};
+    var heat = this.props.heat || {};
+    var numbers = this.props.numbers != null ? this.props.numbers : true;
+    var dark = this.props.theme === 'dark';
+    var P = dark
+      ? { key: '#23272E', keyBorder: '#353A42', ink: '#ECEAE4', ink2: '#A3A8B0', shadow: '0 1px 0 #0B0C0E', mod: '#1B1E23', modInk: '#6B7078', modBorder: '#2A2E35', dash: '#5B616B', locked: '#1E2126', lockedInk: '#5B616B', accent: '#6E8CFF', ok: '#4CC27F', handLine: '#6B7078', handFill: '#3A3F47' }
+      : { key: '#FFFFFF', keyBorder: '#DAD6CD', ink: '#16181D', ink2: '#5B616B', shadow: '0 1px 0 #D5D1C8', mod: '#F1EFEA', modInk: '#8A8F98', modBorder: '#E4E1DA', dash: '#B9B5AC', locked: '#ECEAE4', lockedInk: '#A3A8B0', accent: '#2F5BEA', ok: '#1F8A4C', handLine: '#8F897D', handFill: '#EEE9DF' };
+    var FC = dark
+      ? { '1': '#F2B33D', '2': '#7CC6F0', '3': '#2CC495', '4': '#DD9CC0', 'T': '#A3A8B0' }
+      : { '1': '#E69F00', '2': '#56B4E9', '3': '#009E73', '4': '#CC79A7', 'T': '#8A8F98' };
+    var LAYOUT = [
+      [['`', 'Backquote', 1, 'L4'], ['1', 'Digit1', 1, 'L4'], ['2', 'Digit2', 1, 'L3'], ['3', 'Digit3', 1, 'L2'], ['4', 'Digit4', 1, 'L1'], ['5', 'Digit5', 1, 'L1'], ['6', 'Digit6', 1, 'R1'], ['7', 'Digit7', 1, 'R1'], ['8', 'Digit8', 1, 'R2'], ['9', 'Digit9', 1, 'R3'], ['0', 'Digit0', 1, 'R4'], ['-', 'Minus', 1, 'R4'], ['=', 'Equal', 1, 'R4'], ['Backspace', 'Backspace', 2, 'R4']],
+      [['Tab', 'Tab', 1.5, 'L4'], ['Q', 'KeyQ', 1, 'L4'], ['W', 'KeyW', 1, 'L3'], ['E', 'KeyE', 1, 'L2'], ['R', 'KeyR', 1, 'L1'], ['T', 'KeyT', 1, 'L1'], ['Y', 'KeyY', 1, 'R1'], ['U', 'KeyU', 1, 'R1'], ['I', 'KeyI', 1, 'R2'], ['O', 'KeyO', 1, 'R3'], ['P', 'KeyP', 1, 'R4'], ['[', 'BracketLeft', 1, 'R4'], [']', 'BracketRight', 1, 'R4'], ['\\', 'Backslash', 1.5, 'R4']],
+      [['Caps', 'CapsLock', 1.75, 'L4'], ['A', 'KeyA', 1, 'L4'], ['S', 'KeyS', 1, 'L3'], ['D', 'KeyD', 1, 'L2'], ['F', 'KeyF', 1, 'L1'], ['G', 'KeyG', 1, 'L1'], ['H', 'KeyH', 1, 'R1'], ['J', 'KeyJ', 1, 'R1'], ['K', 'KeyK', 1, 'R2'], ['L', 'KeyL', 1, 'R3'], [';', 'Semicolon', 1, 'R4'], ["'", 'Quote', 1, 'R4'], ['Enter', 'Enter', 2.25, 'R4']],
+      [['Shift', 'ShiftLeft', 2.25, 'L4'], ['Z', 'KeyZ', 1, 'L4'], ['X', 'KeyX', 1, 'L3'], ['C', 'KeyC', 1, 'L2'], ['V', 'KeyV', 1, 'L1'], ['B', 'KeyB', 1, 'L1'], ['N', 'KeyN', 1, 'R1'], ['M', 'KeyM', 1, 'R1'], [',', 'Comma', 1, 'R2'], ['.', 'Period', 1, 'R3'], ['/', 'Slash', 1, 'R4'], ['Shift', 'ShiftRight', 2.75, 'R4']],
+      [['Ctrl', 'ControlLeft', 1.25, ''], ['Win', 'MetaLeft', 1.25, ''], ['Alt', 'AltLeft', 1.25, ''], ['', 'Space', 6.25, 'T'], ['Alt', 'AltRight', 1.25, ''], ['Win', 'MetaRight', 1.25, ''], ['Menu', 'ContextMenu', 1.25, ''], ['Ctrl', 'ControlRight', 1.25, '']]
+    ];
+    var radius = Math.round(U * 0.12);
+    var big = Math.round(U * 0.34);
+    var small = Math.max(9, Math.round(U * 0.2));
+    var centers = {};
+    var fingerOf = {};
+    var rows = LAYOUT.map(function (row, ri) {
+      var x54 = 0;
+      var keys = row.map(function (d) {
+        var label = d[0], code = d[1], kw = d[2], finger = d[3];
+        var w = Math.round(kw * U - g);
+        var h = U - g;
+        centers[code] = { x: x54 + (kw * 54 - 6) / 2, y: ri * 54 + 24 };
+        fingerOf[code] = finger;
+        x54 += kw * 54;
+        var num = finger ? finger.slice(-1) : '';
+        var col = finger ? FC[num] : '#8A8F98';
+        var bg = P.key, border = '1px solid ' + P.keyBorder, ink = P.ink, op = 1, shadow = P.shadow, outline = 'none', badge = false;
+        var lvl = 'L1';
+        if (mode === 'levels') { lvl = levels[code] || (finger ? 'locked' : 'mod'); }
+        if (mode === 'zones' || mode === 'levels') {
+          if (lvl === 'L3') { op = 0; }
+          else if (!finger || lvl === 'mod') { bg = P.mod; ink = P.modInk; border = '1px solid ' + P.modBorder; shadow = 'none'; }
+          else if (lvl === 'ok') { bg = P.ok + '33'; border = '2px solid ' + P.ok; }
+          else if (lvl === 'L0') { bg = col + '38'; border = '2px solid ' + col; badge = numbers; }
+          else if (lvl === 'L1') { bg = col + '38'; border = '1px solid ' + col + '80'; badge = (mode === 'zones') && numbers; }
+          else if (lvl === 'L2') { bg = 'transparent'; border = '1.5px dashed ' + P.dash; ink = 'transparent'; shadow = 'none'; }
+          else if (lvl === 'L3') { op = 0; }
+          else { bg = P.locked; ink = P.lockedInk; border = '1px solid ' + P.modBorder; shadow = 'none'; }
+        } else if (mode === 'heat') {
+          var c = heat[code];
+          if (c == null || !finger || finger === 'T') { bg = P.mod; ink = P.modInk; border = '1px solid ' + P.modBorder; shadow = 'none'; }
+          else {
+            var t = Math.max(0, Math.min(1, c));
+            var mix = function (a, b) { return Math.round(a + (b - a) * t); };
+            bg = 'rgb(' + mix(232, 47) + ', ' + mix(238, 91) + ', ' + mix(252, 234) + ')';
+            ink = t > 0.55 ? '#FFFFFF' : '#16181D';
+            border = '1px solid rgba(22, 24, 29, 0.08)';
+            shadow = 'none';
+            if (t < 0.5) { outline = '2px dashed #D12F45'; }
+          }
+        }
+        if (code === target && op > 0) {
+          border = '2px solid ' + P.accent;
+          shadow = '0 0 0 4px rgba(47, 91, 234, 0.25)';
+          if (ink === 'transparent') { ink = P.ink; }
+        }
+        var isWide = kw > 1.1 || label.length > 1;
+        return {
+          label: label,
+          style: 'width: ' + w + 'px; height: ' + h + 'px; border-radius: ' + radius + 'px; background: ' + bg + '; border: ' + border + '; box-shadow: ' + shadow + '; opacity: ' + op + '; outline: ' + outline + '; outline-offset: 2px;',
+          labelStyle: 'color: ' + ink + '; font-size: ' + (isWide ? small : big) + 'px; font-weight: 700; line-height: 1;',
+          showBadge: !!badge && ['1', '2', '3', '4'].indexOf(num) >= 0 && op > 0,
+          badge: num,
+          badgeStyle: 'position: absolute; right: ' + Math.round(U * 0.09) + 'px; bottom: ' + Math.round(U * 0.07) + 'px; font-size: ' + Math.max(9, Math.round(U * 0.17)) + 'px; font-weight: 700; line-height: 1; color: ' + P.ink2 + ';',
+          bump: (code === 'KeyF' || code === 'KeyJ') && op > 0,
+          bumpStyle: 'position: absolute; left: 50%; bottom: ' + Math.round(U * 0.15) + 'px; width: ' + Math.round(U * 0.28) + 'px; margin-left: -' + Math.round(U * 0.14) + 'px; height: 3px; border-radius: 2px; background: ' + (ink === 'transparent' ? P.dash : P.ink) + '; opacity: 0.5;'
+        };
+      });
+      return { g: g, keys: keys };
+    });
+
+    var W = 15 * U - g;
+    var keysH = 5 * U - g;
+    var HH = Math.round(400 * W / 804);
+    var showHands = handsMode !== 'none';
+    var BASE = { L4: [136, 222], L3: [180, 212], L2: [228, 208], L1: [272, 214], R1: [451, 214], R2: [495, 208], R3: [543, 212], R4: [587, 222] };
+    var HOME = { L4: 'KeyA', L3: 'KeyS', L2: 'KeyD', L1: 'KeyF', R1: 'KeyJ', R2: 'KeyK', R3: 'KeyL', R4: 'Semicolon' };
+    var tf = fingerOf[target];
+    var reaching = handsMode === 'reach' && !!BASE[tf] && HOME[tf] !== target && !!centers[target];
+    var r1 = function (n) { return Math.round(n * 10) / 10; };
+    var f = {};
+    Object.keys(BASE).forEach(function (id) {
+      var hc = centers[HOME[id]];
+      var tip = (reaching && id === tf) ? { x: centers[target].x, y: centers[target].y + 4 } : { x: hc.x, y: hc.y + 6 };
+      var on = !!target && tf === id;
+      var col = FC[id.slice(-1)];
+      f[id] = { x1: BASE[id][0], y1: BASE[id][1], x2: r1(tip.x), y2: r1(tip.y), r: on ? 15 : 12, sw: on ? 4 : 3, col: col, fill: col + (on ? '99' : '55') };
+    });
+    var thumbOn = target === 'Space';
+    var th = { r: thumbOn ? 15 : 12, sw: thumbOn ? 4 : 3, fill: '#8A8F98' + (thumbOn ? '99' : '55') };
+    var reach = { d: 'M0 0', op: 0, gx: 0, gy: 0 };
+    if (reaching) {
+      var hc2 = centers[HOME[tf]];
+      var hx = hc2.x, hy = hc2.y + 6, tx = centers[target].x, ty = centers[target].y + 4;
+      var dx = tx - hx, dy = ty - hy, len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var ux = dx / len, uy = dy / len, side = tf.charAt(0) === 'L' ? -1 : 1;
+      var sx = hx + ux * 14, sy = hy + uy * 14, ex = tx - ux * 17, ey = ty - uy * 17;
+      var cx = (sx + ex) / 2 - uy * side * 34, cy = (sy + ey) / 2 + ux * side * 34;
+      reach = { d: 'M' + r1(sx) + ' ' + r1(sy) + ' Q' + r1(cx) + ' ' + r1(cy) + ' ' + r1(ex) + ' ' + r1(ey), op: 1, gx: r1(hx), gy: r1(hy) };
+    }
+    return {
+      W: W,
+      H: showHands ? HH : keysH,
+      HH: HH,
+      g: g,
+      rows: rows,
+      showHands: showHands,
+      f: f,
+      th: th,
+      reach: reach,
+      hand: { line: P.handLine, fill: P.handFill },
+      accent: P.accent,
+      ariaLabel: this.props.label || 'Keyboard with each key coloured by the finger that presses it'
+    };
+  }
+}
+</script>
+</body>
+</html>

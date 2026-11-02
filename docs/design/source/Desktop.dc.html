@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>EyesUp desktop apps</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 2160px; height: 1080px; box-sizing: border-box; padding: 44px 48px; background: #E9E6DF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column; gap: 26px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Desktop apps · Phase 3</span>
+<h1 style="margin: 0; font-size: 32px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em">The same app in every system's own window</h1>
+</div>
+<span style="font-size: 16px; color: #3A3F47; max-width: 640px; text-align: right">Only the frame changes. Inside, every screen is the web app's interface, so learning is identical on Windows, macOS and Linux.</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
+<sc-for list="{{ wins }}" as="w" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="border-radius: {{ w.radius }}; overflow: hidden; background: #F6F4EF; box-shadow: 0 18px 40px rgba(22, 24, 29, 0.18), 0 0 0 1px rgba(22, 24, 29, 0.12)">
+<sc-if value="{{ w.mac }}" hint-placeholder-val="{{ false }}">
+<div style="height: 38px; background: #ECEAE4; border-bottom: 1px solid #DAD6CD; display: flex; align-items: center; padding: 0 14px; position: relative">
+<span style="display: flex; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #28C840"></span></span>
+<span style="position: absolute; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: 700; color: #3A3F47">EyesUp</span>
+</div>
+</sc-if>
+<sc-if value="{{ w.win }}" hint-placeholder-val="{{ false }}">
+<div style="height: 36px; background: #FFFFFF; border-bottom: 1px solid #E4E1DA; display: flex; align-items: center; justify-content: space-between; padding-left: 12px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #16181D"><svg width="16" height="16" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#16181D" stroke-width="2.6"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#2F5BEA" stroke-width="3" stroke-linecap="round"></path></svg>EyesUp</span>
+<span style="display: flex; height: 36px">
+<span style="width: 46px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5 H10" stroke="#16181D" stroke-width="1"></path></svg></span>
+<span style="width: 46px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="#16181D" stroke-width="1"></rect></svg></span>
+<span style="width: 46px; display: flex; align-items: center; justify-content: center"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 0 L10 10 M10 0 L0 10" stroke="#16181D" stroke-width="1"></path></svg></span>
+</span>
+</div>
+</sc-if>
+<sc-if value="{{ w.gnome }}" hint-placeholder-val="{{ false }}">
+<div style="height: 46px; background: #EBEBEB; border-bottom: 1px solid #D6D6D6; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; position: relative">
+<span style="position: absolute; left: 0; right: 0; text-align: center; font-size: 14px; font-weight: 700; color: #2E2E2E">EyesUp</span>
+<span style="width: 24px; height: 24px; border-radius: 12px; background: #D6D6D6; display: flex; align-items: center; justify-content: center; position: relative"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M0 0 L8 8 M8 0 L0 8" stroke="#2E2E2E" stroke-width="1.4"></path></svg></span>
+</div>
+</sc-if>
+<div style="padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 16px; align-items: center">
+<div style="width: 100%; display: flex; align-items: center; gap: 10px"><span style="font-size: 12px; font-weight: 700">Session 12</span><span style="flex: 1; height: 6px; border-radius: 3px; background: #E4E1DA; overflow: hidden"><span style="display: block; width: 29%; height: 6px; background: #2F5BEA"></span></span><span style="font-size: 12px; color: #5B616B">Line 7 of 24</span></div>
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; display: flex; align-items: center"><span>sure fi</span><span style="display: inline-block; width: 2px; height: 28px; background: #2F5BEA; margin: 0 1px"></span><span style="box-shadow: inset 0 -3px 0 #E69F00">r</span><span style="color: #8A8F98">e rude user</span></div>
+<dc-import name="Keyboard" mode="levels" hands="none" unit="28" target="KeyR" levels="{{ lv }}" label="Fading keyboard guide inside the desktop window" hint-size="417px,137px"></dc-import>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center"><span style="padding: 4px 10px; border-radius: 999px; background: #F1EFEA; font-size: 12px">{{ w.chip1 }}</span><span style="padding: 4px 10px; border-radius: 999px; background: #F1EFEA; font-size: 12px">{{ w.chip2 }}</span></div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 700">{{ w.name }}</span><span style="font-size: 14px; color: #3A3F47">{{ w.pack }}</span></div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; flex: 1">
+<div style="padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DAD6CD; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.06em; text-transform: uppercase">Update ready · shown on the session summary</span>
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 12px; background: #F6F4EF; border: 1px solid #E4E1DA">
+<svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true" style="flex: none"><circle cx="18" cy="18" r="16" fill="#2F5BEA1F"></circle><path d="M18 9 V22 M12 17 L18 23 L24 17" fill="none" stroke="#2F5BEA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M11 27 H25" stroke="#2F5BEA" stroke-width="2.5" stroke-linecap="round"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 17px; font-weight: 700">EyesUp 1.4.0 is ready</span>
+<span style="font-size: 14px; line-height: 1.45; color: #3A3F47">Adds Fluency rhythm drills and fixes AltGr on Linux. Restarting takes a few seconds; your progress stays.</span>
+<div style="display: flex; gap: 10px"><button type="button" style="font: inherit; font-size: 14px; font-weight: 700; color: #FFFFFF; background: #2F5BEA; border: none; border-radius: 9px; padding: 10px 16px; min-height: 44px">Restart now</button><button type="button" style="font: inherit; font-size: 14px; font-weight: 700; color: #16181D; background: #FFFFFF; border: 1px solid #DAD6CD; border-radius: 9px; padding: 10px 16px; min-height: 44px">After I close EyesUp</button></div>
+</div>
+</div>
+<span style="font-size: 13px; color: #5B616B">Never offered during a session. The download is verified against the release signature before install.</span>
+</div>
+<div style="padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DAD6CD; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.06em; text-transform: uppercase">Daily reminder · off until switched on</span>
+<div style="align-self: flex-start; width: 380px; display: flex; gap: 12px; padding: 14px 16px; border-radius: 14px; background: #FFFFFF; box-shadow: 0 10px 28px rgba(22, 24, 29, 0.16), 0 0 0 1px rgba(22, 24, 29, 0.08)">
+<svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true" style="flex: none"><rect x="1" y="1" width="30" height="30" rx="8" fill="#16181D"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#6E8CFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13 23 H19" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 700">EyesUp</span><span style="font-size: 14px; line-height: 1.4; color: #3A3F47">Your 12 minutes are ready. R and U are waiting for you.</span></div>
+</div>
+<span style="font-size: 13px; color: #5B616B">Uses the system's own notification centre. One reminder a day at the time the learner picks; none on rest days.</span>
+</div>
+<div style="padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DAD6CD; display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.06em; text-transform: uppercase">First launch on desktop</span>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 12px; background: #F6F4EF; border: 1px solid #E4E1DA">
+<span style="font-size: 17px; font-weight: 700">Already practising in the browser?</span>
+<span style="font-size: 14px; line-height: 1.45; color: #3A3F47">Export your progress from the web app's Settings, then open the file here. Every key's history comes with it.</span>
+<div style="display: flex; gap: 10px; flex-wrap: wrap"><button type="button" style="font: inherit; font-size: 14px; font-weight: 700; color: #FFFFFF; background: #2F5BEA; border: none; border-radius: 9px; padding: 10px 16px; min-height: 44px">Open export file…</button><button type="button" style="font: inherit; font-size: 14px; font-weight: 700; color: #16181D; background: #FFFFFF; border: 1px solid #DAD6CD; border-radius: 9px; padding: 10px 16px; min-height: 44px">Start fresh</button></div>
+</div>
+<span style="font-size: 13px; color: #5B616B">Works fully offline from this moment. No account, no sign-in.</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2160,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var lv = { Space: 'L3', KeyF: 'L3', KeyJ: 'L3', KeyD: 'L3', KeyK: 'L3', KeyS: 'L2', KeyL: 'L2', KeyA: 'L2', Semicolon: 'L2', KeyE: 'L1', KeyI: 'L1', KeyR: 'L0', KeyU: 'L0' };
+    return {
+      lv: lv,
+      wins: [
+        { mac: true, win: false, gnome: false, radius: '12px', name: 'macOS 12 and later', pack: 'Universal .app in a DMG · Developer ID signed and notarized', chip1: '⌃ Control to peek', chip2: 'Esc pause' },
+        { mac: false, win: true, gnome: false, radius: '8px', name: 'Windows 10 and 11', pack: 'MSI and NSIS installers · Authenticode signed · Microsoft Store', chip1: 'Ctrl to peek', chip2: 'Esc pause' },
+        { mac: false, win: false, gnome: true, radius: '12px', name: 'Ubuntu, Debian, Kali, Fedora and more', pack: '.deb, .rpm, AppImage and Flatpak · GPG-signed repositories', chip1: 'Ctrl to peek', chip2: 'Esc pause' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

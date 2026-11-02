@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reach storyboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1900px; height: 700px; box-sizing: border-box; padding: 48px; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Teaching illustration 02 · The reach</span>
+<h1 style="margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em">One finger moves, then comes straight home.</h1>
+</div>
+<p style="margin: 0; max-width: 560px; font-size: 16px; line-height: 1.5; color: #5B616B">Shown on every intro card and at guide level L0. The other fingers never leave the home row, so the hand never loses its place.</p>
+</div>
+<div style="display: flex; gap: 32px; align-items: stretch">
+<div style="width: 576px; box-sizing: border-box; padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 28px; height: 28px; border-radius: 14px; background: #16181D; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">1</span>
+<span style="font-size: 20px; font-weight: 700">Rest</span>
+</div>
+<dc-import name="Keyboard" mode="zones" hands="rest" unit="36" numbers="{{ false }}" label="Hands resting on the home row" hint-size="536px,267px"></dc-import>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #3A3F47">Fingertips rest on A S D F and J K L ;. Thumbs hover over Space. Wrists float just above the desk.</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><span style="padding: 4px 10px; border-radius: 999px; background: #F1EFEA; font-size: 13px; font-weight: 700; color: #5B616B">Hands-ready gate</span></div>
+</div>
+<div style="width: 576px; box-sizing: border-box; padding: 20px; border-radius: 16px; background: #FFFFFF; border: 2px solid #2F5BEA; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 28px; height: 28px; border-radius: 14px; background: #2F5BEA; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">2</span>
+<span style="font-size: 20px; font-weight: 700">Reach to E</span>
+</div>
+<dc-import name="Keyboard" mode="zones" hands="reach" target="KeyE" unit="36" numbers="{{ false }}" label="Left middle finger reaching from D up to E" hint-size="536px,267px"></dc-import>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #3A3F47">The next letter is E. Only the left middle finger moves: up and slightly left. The dashed ring marks where it came from.</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><span style="padding: 4px 10px; border-radius: 999px; background: #E8EEFD; font-size: 13px; font-weight: 700; color: #2F5BEA">400 ms, ease-out</span><span style="padding: 4px 10px; border-radius: 999px; background: #F1EFEA; font-size: 13px; font-weight: 700; color: #5B616B">Target key glows</span></div>
+</div>
+<div style="width: 576px; box-sizing: border-box; padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 28px; height: 28px; border-radius: 14px; background: #16181D; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">3</span>
+<span style="font-size: 20px; font-weight: 700">Return to D</span>
+</div>
+<dc-import name="Keyboard" mode="zones" hands="rest" target="KeyD" unit="36" numbers="{{ false }}" label="Left middle finger back on D, its home key" hint-size="536px,267px"></dc-import>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #3A3F47">It comes straight back to D, so every reach starts from the same place. That fixed start is what the fingers learn.</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><span style="padding: 4px 10px; border-radius: 999px; background: #F1EFEA; font-size: 13px; font-weight: 700; color: #5B616B">250 ms return</span><span style="padding: 4px 10px; border-radius: 999px; background: #F1EFEA; font-size: 13px; font-weight: 700; color: #5B616B">Reduced motion: static arrow</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1900,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

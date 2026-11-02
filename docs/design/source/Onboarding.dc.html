@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Onboarding: how do you type today?</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5BEA}a:hover{color:#1F45C4}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 32px; border-bottom: 1px solid #E4E1DA; background: #FFFFFF">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#16181D" stroke-width="2.2"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#2F5BEA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13 23 H19" stroke="#16181D" stroke-width="2.2" stroke-linecap="round"></path></svg>
+<span style="font-size: 18px; font-weight: 700">EyesUp</span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="font-size: 14px; color: #5B616B">Question 2 of 6</span>
+<div style="display: flex; gap: 4px; width: 180px" aria-hidden="true"><span style="flex: 1; height: 6px; border-radius: 3px; background: #2F5BEA"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: #2F5BEA"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: #DAD6CD"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: #DAD6CD"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: #DAD6CD"></span><span style="flex: 1; height: 6px; border-radius: 3px; background: #DAD6CD"></span></div>
+</div>
+</header>
+<main style="flex: 1; display: flex; justify-content: center; padding: 48px 24px">
+<div style="width: 100%; max-width: 920px; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">How you type now</span>
+<h1 style="margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em">How do you type today?</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #5B616B; max-width: 640px">There is no wrong answer. A short typing check in a minute will confirm it, so pick what feels closest.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px">
+<sc-for list="{{ options }}" as="o" hint-placeholder-count="4">
+<button type="button" onClick="{{ o.pick }}" aria-pressed="{{ o.pressed }}" style="text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 18px; border-radius: 14px; display: flex; gap: 16px; align-items: center; min-height: 112px; {{ o.cardStyle }}">
+<svg width="132" height="70" viewBox="0 0 132 70" aria-hidden="true" style="flex: none">
+<g opacity="{{ o.numHi }}"><rect x="1" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="14" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="27" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="40" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="53" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="66" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="79" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="92" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="105" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect><rect x="118" y="22" width="11" height="10" rx="2" fill="#2F5BEA33"></rect></g>
+<g fill="none" stroke="#DAD6CD"><rect x="1.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="14.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="27.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="40.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="53.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="66.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="79.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="92.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="105.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="118.5" y="40.5" width="10" height="10" rx="2"></rect><rect x="40.5" y="56.5" width="50" height="10" rx="2"></rect></g>
+<circle cx="6.5" cy="45.5" r="4.5" fill="#CC79A7" opacity="{{ o.d0 }}"></circle>
+<circle cx="19.5" cy="45.5" r="4.5" fill="#009E73" opacity="{{ o.d1 }}"></circle>
+<circle cx="32.5" cy="45.5" r="4.5" fill="#56B4E9" opacity="{{ o.d2 }}"></circle>
+<circle cx="45.5" cy="45.5" r="4.5" fill="#E69F00" opacity="{{ o.d3 }}"></circle>
+<circle cx="84.5" cy="45.5" r="4.5" fill="#E69F00" opacity="{{ o.d3 }}"></circle>
+<circle cx="97.5" cy="45.5" r="4.5" fill="#56B4E9" opacity="{{ o.d2 }}"></circle>
+<circle cx="110.5" cy="45.5" r="4.5" fill="#009E73" opacity="{{ o.d1 }}"></circle>
+<circle cx="123.5" cy="45.5" r="4.5" fill="#CC79A7" opacity="{{ o.d0 }}"></circle>
+<circle cx="65.5" cy="61.5" r="4" fill="#8A8F98" opacity="{{ o.d0 }}"></circle>
+<g transform="translate(0 0)"><path d="M2 9 Q11 0 20 9 Q11 18 2 9 Z" fill="#FFFFFF" stroke="#16181D" stroke-width="1.6"></path><circle cx="11" cy="9" r="3" fill="#16181D"></circle></g>
+<path d="M28 4 V14 M24 10 L28 14 L32 10" fill="none" stroke="#D12F45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="{{ o.eyeDown }}"></path>
+<path d="M28 14 V4 M24 8 L28 4 L32 8" fill="none" stroke="#1F8A4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="{{ o.eyeUp }}"></path>
+</svg>
+<span style="display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0">
+<span style="display: flex; align-items: center; gap: 8px"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; padding: 2px 7px; border-radius: 5px; border: 1px solid #DAD6CD; background: #F6F4EF">{{ o.n }}</kbd><span style="font-size: 17px; font-weight: 700">{{ o.title }}</span></span>
+<span style="font-size: 14px; line-height: 1.45; color: #5B616B">{{ o.desc }}</span>
+</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 8px">
+<a href="#" style="font-size: 15px; font-weight: 700; text-decoration: none">← Back</a>
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<span style="font-size: 14px; color: #5B616B">Press 1–4, then Enter</span>
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 700; color: #FFFFFF; background: #2F5BEA; border: none; border-radius: 10px; padding: 12px 22px; min-height: 44px; cursor: pointer; display: flex; align-items: center; gap: 10px">Continue <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.2)">Enter</kbd></button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: 2 };
+  }
+  renderVals() {
+    var self = this;
+    var ghost = 0.18;
+    var data = [
+      { n: 1, title: 'One or two fingers', desc: 'I look at every key before I press it.', d: [ghost, ghost, ghost, 1], numHi: 0, down: 1 },
+      { n: 2, title: 'Several fingers, looking a lot', desc: 'I can be quick, but my eyes go to the keyboard most of the time.', d: [ghost, 1, 1, 1], numHi: 0, down: 1 },
+      { n: 3, title: 'Letters without looking', desc: 'I touch type words, but look down for numbers and symbols.', d: [1, 1, 1, 1], numHi: 1, down: 0 },
+      { n: 4, title: 'I touch type everything', desc: 'I want more speed and a steadier rhythm.', d: [1, 1, 1, 1], numHi: 0, down: 0 }
+    ];
+    var options = data.map(function (o) {
+      var on = self.state.picked === o.n;
+      return {
+        n: o.n,
+        title: o.title,
+        desc: o.desc,
+        d0: o.d[0], d1: o.d[1], d2: o.d[2], d3: o.d[3],
+        numHi: o.numHi,
+        eyeDown: o.down,
+        eyeUp: o.down ? 0 : 1,
+        pressed: on,
+        cardStyle: on ? 'background: #FFFFFF; border: 2px solid #2F5BEA; box-shadow: 0 0 0 4px rgba(47, 91, 234, 0.15);' : 'background: #FFFFFF; border: 2px solid #E4E1DA; box-shadow: none;',
+        pick: function () { self.setState({ picked: o.n }); }
+      };
+    });
+    return { options: options };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The guide fades key by key</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1480px; height: 1040px; box-sizing: border-box; padding: 48px 80px; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 700; color: #5B616B; letter-spacing: 0.08em; text-transform: uppercase">Teaching illustration 03 · Fading the guide</span>
+<h1 style="margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em">The keyboard disappears one key at a time.</h1>
+</div>
+<p style="margin: 0; max-width: 520px; font-size: 16px; line-height: 1.5; color: #5B616B">Each key fades on its own schedule as the learner masters it, and steps back if accuracy slips. Four snapshots of one learner's on-screen keyboard.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px">
+<div style="box-sizing: border-box; padding: 22px 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<span style="font-size: 20px; font-weight: 700">Day 1 · Home row</span>
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">{{ cA }}</span>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5B616B">Full guide on the 8 home keys. Everything else is locked and greyed out.</p>
+<dc-import name="Keyboard" mode="levels" hands="none" unit="40" levels="{{ stA }}" label="Day 1: only the home row is active, with the full guide" hint-size="596px,196px"></dc-import>
+</div>
+<div style="box-sizing: border-box; padding: 22px 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<span style="font-size: 20px; font-weight: 700">Day 4 · First reaches</span>
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">{{ cB }}</span>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5B616B">Home keys step down to colour only, then to an outline, while accuracy holds above 95%. R and U are brand new.</p>
+<dc-import name="Keyboard" mode="levels" hands="none" unit="40" levels="{{ stB }}" label="Day 4: home keys fading, R and U new" hint-size="596px,196px"></dc-import>
+</div>
+<div style="box-sizing: border-box; padding: 22px 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<span style="font-size: 20px; font-weight: 700">Week 2 · Home row gone</span>
+<span style="font-size: 13px; font-weight: 700; color: #5B616B">{{ cC }}</span>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5B616B">The home row is no longer drawn at all. Newly unlocked keys still arrive with the full guide.</p>
+<dc-import name="Keyboard" mode="levels" hands="none" unit="40" levels="{{ stC }}" label="Week 2: home row hidden, newer keys still guided" hint-size="596px,196px"></dc-import>
+</div>
+<div style="box-sizing: border-box; padding: 22px 24px; border-radius: 16px; background: #FFFFFF; border: 2px solid #2F5BEA; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<span style="font-size: 20px; font-weight: 700">Week 4 · Eyes up</span>
+<span style="font-size: 13px; font-weight: 700; color: #2F5BEA">{{ cD }}</span>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.45; color: #5B616B">Most keys are invisible or bare outlines. The learner reads the screen, not the keyboard.</p>
+<dc-import name="Keyboard" mode="levels" hands="none" unit="40" levels="{{ stD }}" label="Week 4: most keys hidden" hint-size="596px,196px"></dc-import>
+</div>
+</div>
+<div style="display: flex; gap: 32px; align-items: center; flex-wrap: wrap; padding: 18px 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E4E1DA">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 5px; background: #56B4E938; border: 2px solid #56B4E9; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">D</span>
+<span style="font-size: 14px"><b>L0</b> full guide</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 5px; background: #56B4E938; border: 1px solid #56B4E980; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">D</span>
+<span style="font-size: 14px"><b>L1</b> colour only</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 5px; border: 1.5px dashed #B9B5AC"></span>
+<span style="font-size: 14px"><b>L2</b> outline</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 5px; border: 1px dotted #E4E1DA"></span>
+<span style="font-size: 14px"><b>L3</b> hidden</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; box-sizing: border-box; border-radius: 5px; background: #ECEAE4; border: 1px solid #E4E1DA; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #A3A8B0">Z</span>
+<span style="font-size: 14px"><b>Locked</b> not learned yet</span>
+</div>
+<span style="margin-left: auto; font-size: 14px; color: #5B616B">Peek with Ctrl shows every key; peeked keystrokes don't count toward fading.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1480,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var set = function (codes, lvl, into) { codes.forEach(function (c) { into[c] = lvl; }); return into; };
+    var home = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon'];
+    var stA = set(home, 'L0', { Space: 'L1' });
+    var stB = { Space: 'L2' };
+    set(['KeyF', 'KeyJ', 'KeyD', 'KeyK'], 'L2', stB);
+    set(['KeyS', 'KeyL', 'KeyA', 'Semicolon', 'KeyE', 'KeyI'], 'L1', stB);
+    set(['KeyR', 'KeyU'], 'L0', stB);
+    var stC = { Space: 'L3' };
+    set(home, 'L3', stC);
+    set(['KeyE', 'KeyI', 'KeyR', 'KeyU'], 'L2', stC);
+    set(['KeyG', 'KeyH', 'KeyT', 'KeyY'], 'L1', stC);
+    set(['KeyW', 'KeyO', 'KeyQ', 'KeyP'], 'L0', stC);
+    var stD = { Space: 'L3' };
+    set(home.concat(['KeyE', 'KeyI', 'KeyR', 'KeyU', 'KeyG', 'KeyH', 'KeyT', 'KeyY']), 'L3', stD);
+    set(['KeyW', 'KeyO', 'KeyQ', 'KeyP', 'KeyC', 'Comma', 'KeyV', 'KeyM'], 'L2', stD);
+    set(['KeyB', 'KeyN', 'KeyX', 'Period'], 'L1', stD);
+    set(['KeyZ', 'Slash'], 'L0', stD);
+    var count = function (m) {
+      var n = { L0: 0, L1: 0, L2: 0, L3: 0 };
+      Object.keys(m).forEach(function (k) { n[m[k]] += 1; });
+      var parts = [];
+      if (n.L0) { parts.push(n.L0 + ' guided'); }
+      if (n.L1) { parts.push(n.L1 + ' colour'); }
+      if (n.L2) { parts.push(n.L2 + ' outline'); }
+      if (n.L3) { parts.push(n.L3 + ' hidden'); }
+      return parts.join(' · ');
+    };
+    return { stA: stA, stB: stB, stC: stC, stD: stD, cA: count(stA), cB: count(stB), cC: count(stC), cD: count(stD) };
+  }
+}
+</script>
+</body>
+</html>

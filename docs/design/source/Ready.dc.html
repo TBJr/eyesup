@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hands-ready gate</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5BEA}a:hover{color:#1F45C4}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #F6F4EF; color: #16181D; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; display: flex; flex-direction: column">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 32px; border-bottom: 1px solid #E4E1DA; background: #FFFFFF">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#16181D" stroke-width="2.2"></rect><path d="M10 17 L16 11 L22 17" fill="none" stroke="#2F5BEA" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13 23 H19" stroke="#16181D" stroke-width="2.2" stroke-linecap="round"></path></svg>
+<span style="font-size: 15px; font-weight: 700">Session 12</span>
+<span style="font-size: 14px; color: #5B616B">· 12 minutes · new: R and U</span>
+</div>
+<a href="#" style="font-size: 15px; font-weight: 700; text-decoration: none; padding: 10px 4px"><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px">Esc</kbd> back to Today</a>
+</header>
+<main style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px 24px">
+<div style="width: 100%; max-width: 860px; display: flex; flex-direction: column; align-items: center; gap: 26px; text-align: center">
+<div style="display: flex; flex-direction: column; gap: 10px; align-items: center">
+<h1 style="margin: 0; font-size: 38px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em">Rest your fingers on the home row.</h1>
+<p style="margin: 0; font-size: 18px; line-height: 1.5; color: #3A3F47; max-width: 620px">Feel for the small bumps on F and J with your index fingers. The other fingers settle beside them.</p>
+</div>
+<div style="padding: 24px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E4E1DA; overflow-x: auto; max-width: 100%">
+<dc-import name="Keyboard" mode="levels" hands="rest" unit="44" levels="{{ lv }}" label="Only the home row is outlined; F is confirmed, J is waiting" hint-size="655px,326px"></dc-import>
+</div>
+<div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center" aria-live="polite">
+<span style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #1F8A4C1A; border: 1px solid #1F8A4C; font-size: 15px"><span style="width: 20px; height: 20px; border-radius: 10px; background: #1F8A4C; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">✓</span>Left index on F</span>
+<span style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #FFFFFF; border: 1px dashed #B9B5AC; font-size: 15px; color: #3A3F47"><span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 10px; border: 2px solid #B9B5AC"></span>Right index on J</span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 14px; background: #16181D; color: #FFFFFF; font-size: 17px; font-weight: 700">Press <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding: 3px 9px; border-radius: 6px; background: rgba(255, 255, 255, 0.15)">F</kbd> and <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding: 3px 9px; border-radius: 6px; background: rgba(255, 255, 255, 0.15)">J</kbd> together to begin</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var codes = ['Backquote', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal', 'Backspace',
+      'Tab', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight', 'Backslash',
+      'CapsLock', 'KeyG', 'KeyH', 'Quote', 'Enter',
+      'ShiftLeft', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'ShiftRight',
+      'ControlLeft', 'MetaLeft', 'AltLeft', 'AltRight', 'MetaRight', 'ContextMenu', 'ControlRight'];
+    var lv = {};
+    codes.forEach(function (c) { lv[c] = 'L3'; });
+    ['KeyA', 'KeyS', 'KeyD', 'KeyK', 'KeyL', 'Semicolon', 'Space'].forEach(function (c) { lv[c] = 'L2'; });
+    lv.KeyF = 'ok';
+    lv.KeyJ = 'L0';
+    return { lv: lv };
+  }
+}
+</script>
+</body>
+</html>

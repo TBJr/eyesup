@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+.vite/
+*.local
+
+# Tests and coverage
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Rust / Tauri
+target/
+apps/desktop/src-tauri/target/
+src-tauri/gen/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# AI / agent tooling (local only)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+AGENTS.md
+AGENTS.local.md
+.agents/
+agents.md
+docs/agent/
+.cursor/
+.cursorrules
+.cursorignore
+.windsurf/
+.continue/
+.aider*
+.codex/
+.gemini/
+.github/copilot*
+copilot-instructions.md
+eyesup-plan-overview.md
+.devin/
+.sweagent/
+CODEX.md
+.mcp.json
