@@ -55,6 +55,12 @@ export function generateLine(input: GenerateLineInput): Line {
   if (kind === undefined) {
     kind = defaultKind(input.unlockedGroupCount, input.rng);
   }
+  // Scheduler may request session block labels; map to generatable kinds.
+  if (kind === 'warmup' || kind === 'cool_down') {
+    kind = 'mixed_review';
+  } else if (kind === 'blind_check') {
+    kind = 'real_words';
+  }
   if (input.unlockedGroupCount <= DRILL_ONLY_MAX_GROUP && isWordLineKind(kind)) {
     kind = input.rng.next() < 0.5 ? 'key_drill' : 'pair_drill';
   }
@@ -79,7 +85,7 @@ export function generateLine(input: GenerateLineInput): Line {
         text = buildWordLine(input, targetLength, focus, allowed, 'mixed');
         break;
       default:
-        kind satisfies never;
+        throw new RangeError(`unsupported line kind: ${String(kind)}`);
     }
 
     if (text.length < LINE_MIN_CHARS || text.length > LINE_MAX_CHARS) {

@@ -2,6 +2,7 @@ export const ENGINE_VERSION = 1;
 
 export type {
   Finger,
+  GuideLevel,
   KeyStat,
   Layout,
   LayoutKey,
@@ -38,6 +39,7 @@ export {
   BREAK_AFTER_CONTINUOUS_MINUTES,
   CONFIDENCE_ACCURACY_CAP,
   CONFIDENCE_TIME_NUMERATOR_MS,
+  DEFAULT_GOAL_WPM,
   DRILL_ONLY_MAX_GROUP,
   FADE_LEVEL1_ACCURACY,
   FADE_LEVEL1_MIN_SESSIONS,
@@ -58,6 +60,8 @@ export {
   PLACEMENT_SIGHTED_WPM_THRESHOLD,
   PLACEMENT_TIE_BAND,
   PSEUDO_WORDS_MIN_GROUP,
+  REVIEW_CONFIDENCE_THRESHOLD,
+  REVIEW_INTERVAL_MAX_DAYS,
   SESSION_LINES_PER_MINUTE,
   SLOWEST_PAIR_DRILL_COUNT,
   TARGET_WPM_FOUNDATIONS_START,
@@ -70,14 +74,38 @@ export {
 } from './params.js';
 
 export {
+  applyFadeRules,
+  canUnlockNextGroup,
   confidence,
   createKeyStat,
+  createPairStat,
+  endSessionFadeUpdate,
+  isDueForReview,
+  keyConfidence,
+  pairConfidence,
   recordKeyInterval,
+  recordKeyPress,
+  recordPairPress,
+  reviewIntervalDays,
+  selectFocusKey,
+  startingTargetWpm,
   targetMsPerChar,
+  targetWpmAfterUnlocks,
+  tryUnlockNextGroup,
   updateAccuracyEwma,
+  windowAccuracy,
 } from './mastery.js';
 
-export { accuracy, grossWpm, netWpm } from './metrics.js';
+export {
+  accuracy,
+  blindShare,
+  consistency,
+  crossoverGap,
+  grossWpm,
+  netWpm,
+  peekRate,
+  rolloverShare,
+} from './metrics.js';
 
 export { createSeededRandom, type SeededRandom } from './random.js';
 
@@ -89,3 +117,24 @@ export {
   type GenerateLineInput,
   type LetterModel,
 } from './generator.js';
+
+export {
+  planSession,
+  sessionGetsBlindCheck,
+  type PlanSessionInput,
+  type PlanSessionResult,
+} from './scheduler.js';
+
+export {
+  adaptKeyEvent,
+  createInputAdapterState,
+  handsReady,
+  isModifierOnlyCode,
+  isPeekModifier,
+} from './input/index.js';
+export type {
+  AdaptedKeyAction,
+  IgnoreReason,
+  InputAdapterResult,
+  InputAdapterState,
+} from './input/index.js';
