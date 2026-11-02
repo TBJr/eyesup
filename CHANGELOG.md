@@ -7,6 +7,7 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 ### Added
 
 - pnpm monorepo with apps/web and packages (engine, ui, layouts, content, tokens), CI, Vitest, Playwright, token and size checks (EU-006).
+- Offline keyboard-event test page under `tools/keyboard-test/` with guided matrix mode, latency harness and GitHub Pages workflow (EU-005).
 - Public-repo housekeeping: `.gitignore`, `.editorconfig`, `.nvmrc`, Contributor Covenant code of conduct, GitHub issue and pull request templates.
 - Product plan, Scope of Work and design snapshots under `docs/spec/` and `docs/design/`.
 - Repository documentation: README, contributing guide, privacy notice, security policy.

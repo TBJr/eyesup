@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EyesUp keyboard test</title>
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --card: #fff;
+      --ink: #16181d;
+      --muted: #5b616b;
+      --border: #e4e1da;
+      --accent: #2f5bea;
+      --ok: #1f8a4c;
+      --bad: #d12f45;
+      --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+      --sans: system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+    h1, h2 { margin: 0 0 0.5rem; }
+    h2 { font-size: 1.1rem; margin-top: 1.5rem; }
+    p.lead { color: var(--muted); margin-top: 0; }
+    .row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin: 0.75rem 0; }
+    button, select, input[type="text"] {
+      font: inherit;
+      padding: 0.45rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--ink);
+    }
+    button { cursor: pointer; }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button:focus-visible, select:focus-visible, #capture:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    #capture {
+      width: 100%;
+      min-height: 8rem;
+      padding: 1rem;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      font-family: var(--mono);
+      font-size: 1rem;
+    }
+    #capture.active { border-color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.75rem; }
+    th, td { border-bottom: 1px solid var(--border); padding: 0.35rem 0.4rem; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    .log-wrap { max-height: 280px; overflow: auto; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+    }
+    .pass { color: var(--ok); }
+    .fail { color: var(--bad); }
+    .na { color: var(--muted); }
+    #guided-instruction { font-size: 1.05rem; }
+    #latency-stats { font-family: var(--mono); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>EyesUp keyboard test</h1>
+    <p class="lead">Self-contained offline page for matrix rows K01–K13, K15 and K18, plus the K14 latency harness. Works when opened from disk.</p>
+
+    <h2>Environment</h2>
+    <div class="card" id="env"></div>
+
+    <h2>Layout guess</h2>
+    <div class="card">
+      <p>Fingerprint from KeyQ / KeyY / KeyE (see onboarding diagnostic). Type those keys in the capture area.</p>
+      <p><strong>Guess:</strong> <span id="layout-guess">—</span></p>
+      <p><strong>Keyboard Map API:</strong> <span id="layout-map">—</span></p>
+    </div>
+
+    <h2>Capture area</h2>
+    <p class="lead">Focus here to log keydown, keyup and composition events. Space, Backspace, ' and / are prevented inside this area only; Ctrl/Cmd shortcuts pass through.</p>
+    <div id="capture" tabindex="0" role="textbox" aria-label="Keyboard capture area">Click or Tab here, then type.</div>
+    <div class="row">
+      <button type="button" id="btn-clear">Clear log</button>
+      <button type="button" id="btn-download">Download results (JSON)</button>
+      <button type="button" id="btn-copy-md">Copy as a Markdown table row</button>
+    </div>
+    <div class="log-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>type</th><th>code</th><th>key</th><th>t</th><th>Δkd</th><th>keyup</th><th>rollover</th>
+            <th>rep</th><th>comp</th><th>loc</th><th>mods</th>
+          </tr>
+        </thead>
+        <tbody id="log-body"></tbody>
+      </table>
+    </div>
+
+    <h2>Guided matrix</h2>
+    <div class="card">
+      <p id="guided-instruction">Press Start guided mode.</p>
+      <div class="row">
+        <button type="button" class="primary" id="btn-guided-start">Start guided mode</button>
+        <button type="button" id="btn-pass">Pass</button>
+        <button type="button" id="btn-fail">Fail</button>
+        <button type="button" id="btn-na">N/A</button>
+        <input type="text" id="guided-note" placeholder="Optional note" size="40" />
+      </div>
+      <ul id="guided-results"></ul>
+    </div>
+
+    <h2>K14 latency harness</h2>
+    <div class="card">
+      <p>Measures keydown <code>timeStamp</code> to the next <code>requestAnimationFrame</code> paint for 60 seconds.</p>
+      <div class="row">
+        <button type="button" class="primary" id="btn-latency">Start 60s run</button>
+        <span id="latency-stats">Not run</span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+(function () {
+  'use strict';
+
+  var MODS = ['Shift', 'Control', 'Alt', 'AltGraph', 'Meta', 'CapsLock'];
+  var FINGERPRINT = [
+    { id: 'qwerty', name: 'QWERTY (US, UK)', q: 'q', y: 'y', e: 'e' },
+    { id: 'qwertz', name: 'QWERTZ (German)', q: 'q', y: 'z', e: 'e' },
+    { id: 'azerty', name: 'AZERTY (French)', q: 'a', y: 'y', e: 'e' },
+    { id: 'dvorak', name: "Dvorak", q: "'", y: 'f', e: '.' }
+  ];
+
+  var GUIDED = [
+    { id: 'K01', title: 'Letters', text: 'Type a short line with several letters. Confirm code and key look right.' },
+    { id: 'K02', title: 'Shift', text: 'Type a few capitals with the opposite-hand Shift.' },
+    { id: 'K03', title: 'Digits and symbols', text: 'Type digits with and without Shift.' },
+    { id: 'K04', title: 'Dead keys', text: 'If AZERTY: type ^ then e, ¨ then i, ^ then Space. Otherwise mark N/A.' },
+    { id: 'K05', title: 'AltGr', text: 'If AZERTY/UK: try AltGr combinations (@, €). Otherwise mark N/A.' },
+    { id: 'K06', title: 'Caps Lock', text: 'Toggle Caps Lock and type a letter. Confirm CapsLock modifier is reported.' },
+    { id: 'K07', title: 'Auto-repeat', text: 'Hold a letter for about 2 seconds. Confirm repeat=true appears after the first press.' },
+    { id: 'K08', title: 'Browser shortcuts', text: 'In the capture area press Space, Backspace, \' and /. Page must not scroll or navigate.' },
+    { id: 'K09', title: 'Peek (Ctrl)', text: 'Hold Control alone, then with C. Control alone should log; Ctrl+C should still copy if text is selected outside.' },
+    { id: 'K10', title: 'Pause on blur', text: 'Click outside the window mid-typing. Confirm you can resume focus afterward (manual observation).' },
+    { id: 'K11', title: 'Hidden tab', text: 'Switch browser tab and return (web only).' },
+    { id: 'K12', title: 'Input method', text: 'If you can enable an IME, type while composing. Confirm composition events appear. Else N/A.' },
+    { id: 'K13', title: 'Rollover timing', text: 'Type a fast word with overlapping keys. Confirm some rows show rollover=yes.' },
+    { id: 'K15', title: 'Layout detection', text: 'Type Q, Y and E physical keys. Confirm the layout guess matches your system.' },
+    { id: 'K18', title: 'Hands-ready gate', text: 'Press F and J together, then press them about 300 ms apart. Record whether simultaneous vs staggered is distinguishable from the log.' }
+  ];
+
+  var events = [];
+  var lastKeydownTs = null;
+  var downMap = Object.create(null);
+  var fingerprintKeys = Object.create(null);
+  var guidedIndex = -1;
+  var guidedResults = [];
+  var latencySamples = [];
+  var latencyActive = false;
+  var latencyDeadline = 0;
+
+  var capture = document.getElementById('capture');
+  var logBody = document.getElementById('log-body');
+
+  function envInfo() {
+    return {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      languages: Array.prototype.slice.call(navigator.languages || []),
+      language: navigator.language,
+      devicePixelRatio: window.devicePixelRatio,
+      openedFrom: location.protocol,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  function renderEnv() {
+    var e = envInfo();
+    document.getElementById('env').innerHTML =
+      '<div><strong>User agent:</strong> ' + escapeHtml(e.userAgent) + '</div>' +
+      '<div><strong>Platform:</strong> ' + escapeHtml(e.platform) + '</div>' +
+      '<div><strong>Languages:</strong> ' + escapeHtml((e.languages || []).join(', ')) + '</div>' +
+      '<div><strong>Device pixel ratio:</strong> ' + e.devicePixelRatio + '</div>' +
+      '<div><strong>Opened via:</strong> ' + escapeHtml(e.openedFrom) + '</div>';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function modState(ev) {
+    var out = [];
+    for (var i = 0; i < MODS.length; i++) {
+      try {
+        if (ev.getModifierState(MODS[i])) out.push(MODS[i]);
+      } catch (err) { /* ignore */ }
+    }
+    return out.join('+') || '—';
+  }
+
+  function shouldPrevent(ev) {
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return false;
+    var k = ev.key;
+    return k === ' ' || k === 'Backspace' || k === "'" || k === '/';
+  }
+
+  function updateFingerprint(code, key) {
+    if (code === 'KeyQ' || code === 'KeyY' || code === 'KeyE') {
+      fingerprintKeys[code] = key.length === 1 ? key.toLowerCase() : key;
+      guessLayout();
+    }
+  }
+
+  function guessLayout() {
+    var q = fingerprintKeys.KeyQ;
+    var y = fingerprintKeys.KeyY;
+    var e = fingerprintKeys.KeyE;
+    var el = document.getElementById('layout-guess');
+    if (!q || !y || !e) {
+      el.textContent = 'Need KeyQ, KeyY and KeyE (have: ' +
+        ['KeyQ=' + (q || '?'), 'KeyY=' + (y || '?'), 'KeyE=' + (e || '?')].join(', ') + ')';
+      return;
+    }
+    for (var i = 0; i < FINGERPRINT.length; i++) {
+      var f = FINGERPRINT[i];
+      if (f.q === q && f.y === y && f.e === e) {
+        el.textContent = f.name + ' (' + f.id + ')';
+        return;
+      }
+    }
+    el.textContent = 'Unknown fingerprint q=' + q + ' y=' + y + ' e=' + e;
+  }
+
+  function probeKeyboardMap() {
+    var el = document.getElementById('layout-map');
+    if (!navigator.keyboard || !navigator.keyboard.getLayoutMap) {
+      el.textContent = 'Not available in this browser';
+      return;
+    }
+    navigator.keyboard.getLayoutMap().then(function (map) {
+      var parts = ['KeyQ=' + map.get('KeyQ'), 'KeyY=' + map.get('KeyY'), 'KeyE=' + map.get('KeyE')];
+      el.textContent = parts.join(', ');
+    }).catch(function (err) {
+      el.textContent = 'Error: ' + err.message;
+    });
+  }
+
+  function appendRow(rec) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + rec.n + '</td>' +
+      '<td>' + escapeHtml(rec.type) + '</td>' +
+      '<td>' + escapeHtml(rec.code) + '</td>' +
+      '<td>' + escapeHtml(rec.key) + '</td>' +
+      '<td>' + rec.timeStamp.toFixed(3) + '</td>' +
+      '<td>' + (rec.intervalKd == null ? '—' : rec.intervalKd.toFixed(3)) + '</td>' +
+      '<td>' + (rec.keyupAt == null ? '—' : Number(rec.keyupAt).toFixed(3)) + '</td>' +
+      '<td>' + (rec.rollover == null ? '—' : (rec.rollover ? 'yes' : 'no')) + '</td>' +
+      '<td>' + (rec.repeat ? '1' : '0') + '</td>' +
+      '<td>' + (rec.isComposing ? '1' : '0') + '</td>' +
+      '<td>' + rec.location + '</td>' +
+      '<td>' + escapeHtml(rec.modifiers) + '</td>';
+    logBody.appendChild(tr);
+    tr.scrollIntoView({ block: 'nearest' });
+  }
+
+  function record(type, ev) {
+    var ts = ev.timeStamp;
+    var intervalKd = null;
+    var rollover = null;
+    var keyupAt = null;
+
+    if (type === 'keydown') {
+      if (lastKeydownTs != null) intervalKd = ts - lastKeydownTs;
+      lastKeydownTs = ts;
+      downMap[ev.code] = { downAt: ts, stillDown: true };
+      updateFingerprint(ev.code, ev.key);
+      if (latencyActive) sampleLatency(ts);
+    }
+
+    if (type === 'keyup') {
+      var down = downMap[ev.code];
+      if (down) {
+        keyupAt = ts;
+        down.stillDown = false;
+        down.upAt = ts;
+      }
+      // Rollover: this keydown landed before the previous key's keyup
+      // Evaluated for the most recent prior down that is not this code.
+    }
+
+    if (type === 'keydown') {
+      rollover = false;
+      for (var code in downMap) {
+        if (!Object.prototype.hasOwnProperty.call(downMap, code)) continue;
+        if (code === ev.code) continue;
+        var other = downMap[code];
+        if (other && other.downAt < ts && (other.stillDown || (other.upAt != null && other.upAt > ts))) {
+          rollover = true;
+          break;
+        }
+      }
+    }
+
+    var rec = {
+      n: events.length + 1,
+      type: type,
+      code: ev.code,
+      key: ev.key,
+      timeStamp: ts,
+      intervalKd: intervalKd,
+      keyupAt: keyupAt,
+      rollover: rollover,
+      repeat: !!ev.repeat,
+      isComposing: !!ev.isComposing,
+      location: ev.location,
+      modifiers: modState(ev)
+    };
+    events.push(rec);
+    appendRow(rec);
+  }
+
+  function onKey(type, ev) {
+    if (document.activeElement !== capture) return;
+    if (type === 'keydown' && shouldPrevent(ev)) ev.preventDefault();
+    record(type, ev);
+  }
+
+  capture.addEventListener('keydown', function (ev) { onKey('keydown', ev); });
+  capture.addEventListener('keyup', function (ev) { onKey('keyup', ev); });
+  capture.addEventListener('compositionstart', function (ev) { record('compositionstart', fakeComp(ev)); });
+  capture.addEventListener('compositionupdate', function (ev) { record('compositionupdate', fakeComp(ev)); });
+  capture.addEventListener('compositionend', function (ev) { record('compositionend', fakeComp(ev)); });
+  capture.addEventListener('focus', function () { capture.classList.add('active'); });
+  capture.addEventListener('blur', function () { capture.classList.remove('active'); });
+
+  function fakeComp(ev) {
+    return {
+      code: '',
+      key: ev.data || '',
+      timeStamp: ev.timeStamp,
+      repeat: false,
+      isComposing: true,
+      location: 0,
+      getModifierState: function () { return false; }
+    };
+  }
+
+  document.getElementById('btn-clear').addEventListener('click', function () {
+    events = [];
+    lastKeydownTs = null;
+    downMap = Object.create(null);
+    logBody.innerHTML = '';
+  });
+
+  function buildResults() {
+    return {
+      environment: envInfo(),
+      layoutGuess: document.getElementById('layout-guess').textContent,
+      layoutMap: document.getElementById('layout-map').textContent,
+      fingerprint: fingerprintKeys,
+      guided: guidedResults,
+      latency: summariseLatency(),
+      events: events
+    };
+  }
+
+  document.getElementById('btn-download').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(buildResults(), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'eyesup-keyboard-test.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('btn-copy-md').addEventListener('click', function () {
+    var cells = [];
+    var byId = Object.create(null);
+    for (var i = 0; i < guidedResults.length; i++) byId[guidedResults[i].id] = guidedResults[i];
+    var ids = ['K01','K02','K03','K04','K05','K06','K07','K08','K09','K10','K11','K12','K13','K14','K15','K16','K17','K18'];
+    for (var j = 0; j < ids.length; j++) {
+      var id = ids[j];
+      var r = byId[id];
+      if (id === 'K14' && !r) {
+        var lat = summariseLatency();
+        if (lat && lat.count) {
+          cells.push(lat.p95 <= 16 ? 'pass p95=' + lat.p95.toFixed(1) + 'ms' : 'fail p95=' + lat.p95.toFixed(1) + 'ms');
+          continue;
+        }
+      }
+      if (!r) { cells.push(''); continue; }
+      var mark = r.result === 'pass' ? 'pass' : r.result === 'fail' ? 'fail' : 'N/A';
+      cells.push(mark + (r.note ? ' — ' + r.note : ''));
+    }
+    var line = '| ' + cells.join(' | ') + ' |';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(line).then(function () {
+        document.getElementById('btn-copy-md').textContent = 'Copied';
+        setTimeout(function () {
+          document.getElementById('btn-copy-md').textContent = 'Copy as a Markdown table row';
+        }, 1200);
+      });
+    } else {
+      window.prompt('Copy this row:', line);
+    }
+  });
+
+  function showGuided() {
+    var el = document.getElementById('guided-instruction');
+    if (guidedIndex < 0 || guidedIndex >= GUIDED.length) {
+      el.textContent = guidedIndex >= GUIDED.length ? 'Guided mode complete.' : 'Press Start guided mode.';
+      return;
+    }
+    var step = GUIDED[guidedIndex];
+    el.textContent = step.id + ' · ' + step.title + ' — ' + step.text;
+  }
+
+  function renderGuidedResults() {
+    var ul = document.getElementById('guided-results');
+    ul.innerHTML = '';
+    for (var i = 0; i < guidedResults.length; i++) {
+      var r = guidedResults[i];
+      var li = document.createElement('li');
+      li.className = r.result === 'pass' ? 'pass' : r.result === 'fail' ? 'fail' : 'na';
+      li.textContent = r.id + ': ' + r.result + (r.note ? ' — ' + r.note : '');
+      ul.appendChild(li);
+    }
+  }
+
+  function recordGuided(result) {
+    if (guidedIndex < 0 || guidedIndex >= GUIDED.length) return;
+    var step = GUIDED[guidedIndex];
+    var note = document.getElementById('guided-note').value.trim();
+    guidedResults = guidedResults.filter(function (r) { return r.id !== step.id; });
+    guidedResults.push({ id: step.id, title: step.title, result: result, note: note });
+    document.getElementById('guided-note').value = '';
+    guidedIndex += 1;
+    renderGuidedResults();
+    showGuided();
+  }
+
+  document.getElementById('btn-guided-start').addEventListener('click', function () {
+    guidedIndex = 0;
+    guidedResults = [];
+    renderGuidedResults();
+    showGuided();
+    capture.focus();
+  });
+  document.getElementById('btn-pass').addEventListener('click', function () { recordGuided('pass'); });
+  document.getElementById('btn-fail').addEventListener('click', function () { recordGuided('fail'); });
+  document.getElementById('btn-na').addEventListener('click', function () { recordGuided('n/a'); });
+
+  function percentile(sorted, p) {
+    if (!sorted.length) return null;
+    var idx = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1);
+    return sorted[Math.max(0, idx)];
+  }
+
+  function summariseLatency() {
+    if (!latencySamples.length) return { count: 0 };
+    var sorted = latencySamples.slice().sort(function (a, b) { return a - b; });
+    return {
+      count: sorted.length,
+      p50: percentile(sorted, 50),
+      p95: percentile(sorted, 95),
+      samplesMs: latencySamples.slice()
+    };
+  }
+
+  function sampleLatency(keydownTs) {
+    requestAnimationFrame(function () {
+      var paint = performance.now();
+      // timeStamp is DOMHighResTimeStamp on same clock as performance.now()
+      latencySamples.push(paint - keydownTs);
+      if (performance.now() >= latencyDeadline) {
+        latencyActive = false;
+        var s = summariseLatency();
+        document.getElementById('latency-stats').textContent =
+          'n=' + s.count + '  p50=' + s.p50.toFixed(2) + ' ms  p95=' + s.p95.toFixed(2) + ' ms' +
+          (s.p95 <= 16 ? '  (under 16 ms budget)' : '  (over 16 ms budget)');
+      } else {
+        document.getElementById('latency-stats').textContent =
+          'Running… ' + Math.max(0, Math.ceil((latencyDeadline - performance.now()) / 1000)) + 's left, n=' + latencySamples.length;
+      }
+    });
+  }
+
+  document.getElementById('btn-latency').addEventListener('click', function () {
+    latencySamples = [];
+    latencyActive = true;
+    latencyDeadline = performance.now() + 60000;
+    document.getElementById('latency-stats').textContent = 'Running… focus the capture area and type steadily for 60 seconds.';
+    capture.focus();
+  });
+
+  // Expose for Playwright
+  window.__eyesupKeyboardTest = {
+    getEvents: function () { return events.slice(); },
+    getResults: buildResults
+  };
+
+  renderEnv();
+  probeKeyboardMap();
+  showGuided();
+})();
+  </script>
+</body>
+</html>
