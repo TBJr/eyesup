@@ -48,10 +48,17 @@
     type LinePlayState,
     type SessionUiState,
   } from './lib/sessionPlayer.js';
-  import { createIndexedDbAdapter } from './storage/indexedDbAdapter.js';
+  import { ensureMilestone, MILESTONE } from './lib/milestones.js';
+  import {
+    applyDesktopUpdate,
+    startDesktopUpdateWatcher,
+  } from './lib/desktopUpdate.js';
+  import { createStorageAdapter } from './storage/createStorageAdapter.js';
+  import { detectIsTauri, invokeCmd } from './storage/tauriBridge.js';
   import {
     STORAGE_SCHEMA_VERSION,
     type BaselineRecord,
+    type EyesUpExport,
     type KeyStatRecord,
     type MilestoneRecord,
     type OwnTextRecord,
@@ -60,7 +67,8 @@
     type StorageAdapter,
   } from './storage/types.js';
 
-  const storage: StorageAdapter = createIndexedDbAdapter();
+  const storage: StorageAdapter = createStorageAdapter();
+  const isDesktop = detectIsTauri();
   const GOAL_OPTIONS = goalWpmOptions(15, 80);
 
   let route = $state<Route>('welcome');
@@ -68,6 +76,11 @@
   let baseline = $state<BaselineRecord | null>(null);
   let ready = $state(false);
   let updateWaiting = $state(false);
+  /** Where the pending update came from — SW reload vs desktop apply_update. */
+  let updateSource = $state<'sw' | 'desktop' | null>(null);
+  let desktopFullscreen = $state(false);
+  let desktopImportError = $state('');
+  let desktopImportBusy = $state(false);
   let deviceBanner = $state(false);
 
   // Onboarding
@@ -184,22 +197,30 @@
         if (!window.location.hash || window.location.hash === '#/' || window.location.hash === '#') {
           navigate('today');
         }
+      } else if (isDesktop) {
+        navigate('desktop-import');
       } else if (!window.location.hash) {
         navigate('welcome');
       }
       ready = true;
     })();
 
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && !isDesktop) {
       void navigator.serviceWorker.register(
         `${import.meta.env.BASE_URL}sw.js`.replace(/\/{2,}/g, '/'),
       );
       navigator.serviceWorker.addEventListener('message', (ev) => {
         if (ev.data?.type === 'eyesup-update-ready') {
           updateWaiting = true;
+          updateSource = 'sw';
         }
       });
     }
+
+    const stopDesktopUpdate = startDesktopUpdateWatcher(() => {
+      updateWaiting = true;
+      updateSource = 'desktop';
+    });
 
     const onBlur = () => {
       if (sessionUi === 'typing') sessionUi = 'paused';
@@ -210,10 +231,82 @@
     });
 
     return () => {
+      stopDesktopUpdate();
       window.removeEventListener('hashchange', sync);
       window.removeEventListener('blur', onBlur);
     };
   });
+
+  /** True while a practice session is mid-flow (never apply updates here). */
+  function inPracticeSession(): boolean {
+    return (
+      route === 'practice' &&
+      sessionUi !== 'summary' &&
+      sessionUi !== 'handsReady'
+    );
+  }
+
+  async function installWaitingUpdate() {
+    if (updateSource === 'desktop') {
+      try {
+        await applyDesktopUpdate();
+      } catch {
+        // Stub returns until signing secrets exist; clear the banner.
+        updateWaiting = false;
+        updateSource = null;
+      }
+      return;
+    }
+    updateWaiting = false;
+    updateSource = null;
+    location.reload();
+  }
+
+  function dismissWaitingUpdate() {
+    updateWaiting = false;
+    updateSource = null;
+  }
+
+  async function skipDesktopImport() {
+    desktopImportError = '';
+    navigate('welcome');
+  }
+
+  async function onDesktopImportFile(ev: Event) {
+    const input = ev.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    desktopImportBusy = true;
+    desktopImportError = '';
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as EyesUpExport;
+      if (!data || typeof data !== 'object' || data.schemaVersion == null) {
+        throw new Error('invalid');
+      }
+      await storage.importJson(data);
+      profile = await storage.getProfile();
+      baseline = await storage.getBaseline();
+      if (profile) applyDisplaySettings(profile.accessProfile);
+      navigate(profile ? 'today' : 'welcome');
+    } catch {
+      desktopImportError = t.desktop.importError;
+    } finally {
+      desktopImportBusy = false;
+    }
+  }
+
+  async function toggleDesktopFullscreen() {
+    if (!isDesktop) return;
+    const next = !desktopFullscreen;
+    try {
+      await invokeCmd('set_fullscreen', { fullscreen: next });
+      desktopFullscreen = next;
+    } catch {
+      // Native command unavailable outside a built shell.
+    }
+  }
 
   async function loadProgressData() {
     if (!profile) return;
@@ -248,6 +341,10 @@
 
   function onGlobalKey(e: KeyboardEvent) {
     if (route === 'device') return;
+    if (route === 'desktop-import' && e.key === 'Enter') {
+      void skipDesktopImport();
+      return;
+    }
     if (route === 'welcome' && e.key === 'Enter') {
       navigate('orient');
       return;
@@ -293,6 +390,10 @@
       return;
     }
     if (route === 'today' && e.key === 'Enter') {
+      if (updateWaiting && !inPracticeSession()) {
+        void installWaitingUpdate();
+        return;
+      }
       void startSession();
       return;
     }
@@ -315,8 +416,7 @@
       }
       if (sessionUi === 'summary' && e.key === 'Enter') {
         if (updateWaiting) {
-          updateWaiting = false;
-          location.reload();
+          void installWaitingUpdate();
           return;
         }
         timedTestMode = false;
@@ -405,6 +505,15 @@
       guideChanges: [],
       savedAt: new Date().toISOString(),
     });
+    if (currentLine.kind === 'blind_check') {
+      await ensureMilestone(storage, MILESTONE.firstBlindLine, { sessionId: current.id });
+      if (lastLineWpm >= 30) {
+        await ensureMilestone(storage, MILESTONE.first30WpmBlind, {
+          sessionId: current.id,
+          netWpm: Math.round(lastLineWpm),
+        });
+      }
+    }
   }
 
   async function bumpKeysForCurrentLine() {
@@ -480,6 +589,29 @@
       updatedAt: new Date().toISOString(),
     };
     await storage.putProfile(profile);
+
+    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+    const keyRecords = await storage.getKeyStats(profile.layoutId);
+    const letterCodes = layoutObj.keys
+      .filter((k) => k.base && /^[a-z]$/i.test(k.base) && k.learn !== false)
+      .map((k) => k.code);
+    if (
+      letterCodes.length > 0 &&
+      letterCodes.every((code) => keyRecords.some((k) => k.code === code && k.unlockedAt))
+    ) {
+      await ensureMilestone(storage, MILESTONE.allLettersUnlocked, {
+        layoutId: profile.layoutId,
+      });
+    }
+
+    const base = await storage.getBaseline();
+    const allSessions = await storage.listSessions();
+    const cx = crossoverFromBaseline(base, allSessions);
+    if (cx?.crossed) {
+      await ensureMilestone(storage, MILESTONE.crossoverReached, {
+        gap: Math.round(cx.gap * 10) / 10,
+      });
+    }
   }
 
   async function startSession() {
@@ -901,6 +1033,25 @@
       <h1>{t.device.title}</h1>
       <p>{t.device.body}</p>
       <button type="button" onclick={copyAppLink}>{t.device.copy}</button>
+    {:else if route === 'desktop-import'}
+      <h1>{t.desktop.importTitle}</h1>
+      <p>{t.desktop.importBody}</p>
+      <label class="file-pick">
+        {t.desktop.importChoose}
+        <input
+          type="file"
+          accept="application/json,.json"
+          disabled={desktopImportBusy}
+          onchange={(e) => void onDesktopImportFile(e)}
+        />
+      </label>
+      <button type="button" disabled={desktopImportBusy} onclick={() => void skipDesktopImport()}>
+        {t.desktop.importSkip}
+      </button>
+      {#if desktopImportError}
+        <p role="alert">{desktopImportError}</p>
+      {/if}
+      <p class="hint">{t.questions.continue}</p>
     {:else if route === 'welcome'}
       <h1>{t.welcome.title}</h1>
       <p>{t.welcome.body}</p>
@@ -998,9 +1149,20 @@
       {/if}
       <p class="hint">{t.today.start}</p>
       {#if updateWaiting}
-        <p role="status">{t.update.ready}</p>
+        <aside class="update-banner" role="status">
+          <p>{t.update.ready}</p>
+          <button type="button" onclick={() => void installWaitingUpdate()}>{t.update.install}</button>
+          <button type="button" onclick={dismissWaitingUpdate}>{t.update.later}</button>
+        </aside>
       {/if}
     {:else if route === 'practice'}
+      {#if isDesktop}
+        <p>
+          <button type="button" onclick={() => void toggleDesktopFullscreen()}>
+            {desktopFullscreen ? t.desktop.exitFullscreen : t.desktop.fullscreen}
+          </button>
+        </p>
+      {/if}
       {#if sessionUi === 'handsReady'}
         <h1>{t.practice.handsReady}</h1>
         <Keyboard {layout} mode="levels" hands="rest" target="KeyF" {levels} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
@@ -1022,6 +1184,13 @@
         <h1>{t.practice.summary}</h1>
         <p>{t.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
         <p class="hint">{t.practice.done}</p>
+        {#if updateWaiting}
+          <aside class="update-banner" role="status">
+            <p>{t.update.ready}</p>
+            <button type="button" onclick={() => void installWaitingUpdate()}>{t.update.install}</button>
+            <button type="button" onclick={dismissWaitingUpdate}>{t.update.later}</button>
+          </aside>
+        {/if}
       {:else if currentLine}
         {#if notices.includes('caps_lock')}
           <p role="status">{t.practice.capsLock}</p>
@@ -1317,6 +1486,13 @@
   }
   .hint {
     color: var(--color-ink-secondary, #5b616b);
+  }
+  .file-pick {
+    display: block;
+    margin: 1rem 0;
+  }
+  .file-pick input {
+    margin-top: 0.5rem;
   }
   .selected {
     outline: 2px solid var(--color-accent, #2f6fed);

@@ -151,8 +151,20 @@
     "body": "Open this link on a computer with a physical keyboard to practise.",
     "copy": "Copy link"
   },
+  "desktop": {
+    "importTitle": "Bring your web progress",
+    "importBody": "Optional: open a JSON export from the EyesUp web app. Everything stays on this device.",
+    "importChoose": "Choose export file",
+    "importSkip": "Start fresh",
+    "importDone": "Import complete",
+    "importError": "Could not import that file",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen"
+  },
   "update": {
-    "ready": "A new version is ready. It will load between sessions."
+    "ready": "A new version is ready. It will load between sessions.",
+    "install": "Restart to update",
+    "later": "After this session"
   },
   "a11y": {
     "keyboard": "On-screen keyboard",

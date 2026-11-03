@@ -10,6 +10,7 @@
     "beforeBuildCommand": "pnpm --filter @eyesup/web build"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "EyesUp",

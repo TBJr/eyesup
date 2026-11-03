@@ -1,0 +1,8 @@
+[[permission]]
+identifier = "allow-window-state"
+description = "Allows remembered window geometry and full-screen practice (EU-048)"
+commands.allow = [
+  "get_window_state",
+  "set_window_state",
+  "set_fullscreen"
+]

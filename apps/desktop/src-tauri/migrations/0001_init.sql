@@ -97,7 +97,11 @@ CREATE TABLE line_result (
   id             INTEGER PRIMARY KEY,
   session_id     INTEGER NOT NULL REFERENCES session (id) ON DELETE CASCADE,
   position       INTEGER NOT NULL,                        -- 1-based line number in the session
-  line_type      TEXT    NOT NULL CHECK (line_type IN ('warmup', 'key_drill', 'pair_drill', 'pseudo_words', 'real_words', 'mixed_review', 'blind_check', 'own_text', 'code', 'timed_test')),
+  line_type      TEXT    NOT NULL CHECK (line_type IN (
+    'warmup', 'key_drill', 'pair_drill', 'pseudo_words', 'real_words',
+    'mixed_review', 'blind_check', 'cool_down', 'metronome', 'rollover_drill',
+    'own_text', 'code', 'timed_test'
+  )),
   text_hash      TEXT,                                    -- SHA-256 of own text or code; the text itself is not stored here
   net_wpm        REAL    NOT NULL,
   accuracy       REAL    NOT NULL,

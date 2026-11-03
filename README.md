@@ -4,7 +4,7 @@ Learn to type without looking at the keyboard.
 
 EyesUp starts with a 3-minute check of how you type today, places you on one of four tracks, and teaches with an on-screen keyboard that fades key by key as your fingers learn. It runs in the browser and as a desktop app on Windows, macOS and Linux, from one codebase. Everything you type stays on your device.
 
-> **Status:** Phase 2 in progress on `phase-2` (web v1: Retrain/Fluency, French, Progress, Library, public site). Phase 0 and Phase 1 MVP code are on `main`. Private beta / Gate B still needs a product-owner cohort; see [docs/beta-checklist.md](docs/beta-checklist.md). Desktop (Phase 3) Tauri shell is scaffolded under `apps/desktop`.
+> **Status:** Phase 3 in progress on `phase-3` (desktop: SQLite storage, window state, updater stubs, release workflow). Phase 0–2 web work is on `main` / prior phase branches. Private beta / Gate B still needs a product-owner cohort; see [docs/beta-checklist.md](docs/beta-checklist.md) and [docs/phase-3-owner-checklist.md](docs/phase-3-owner-checklist.md).
 
 ## Principles
 

@@ -150,8 +150,20 @@
     "body": "Ouvrez ce lien sur un ordinateur avec un clavier physique pour pratiquer.",
     "copy": "Copier le lien"
   },
+  "desktop": {
+    "importTitle": "Importer votre progres web",
+    "importBody": "Facultatif : ouvrez un export JSON de l'app web EyesUp. Tout reste sur cet appareil.",
+    "importChoose": "Choisir le fichier",
+    "importSkip": "Commencer a zero",
+    "importDone": "Import termine",
+    "importError": "Impossible d'importer ce fichier",
+    "fullscreen": "Plein ecran",
+    "exitFullscreen": "Quitter le plein ecran"
+  },
   "update": {
-    "ready": "Une nouvelle version est prete. Elle se chargera entre les sessions."
+    "ready": "Une nouvelle version est prete. Elle se chargera entre les sessions.",
+    "install": "Redemarrer pour mettre a jour",
+    "later": "Apres cette session"
   },
   "a11y": {
     "keyboard": "Clavier a l'ecran",

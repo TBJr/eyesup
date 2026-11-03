@@ -46,8 +46,21 @@ Secrets used (names only; values live in the CI secret store): `APPLE_CERTIFICAT
 - [ ] Windows: installer shows the publisher name; app launches offline.
 - [ ] macOS: DMG opens without a Gatekeeper warning; `spctl -a -vv EyesUp.app` reports "accepted, source=Notarized Developer ID".
 - [ ] Linux: `.deb` installs on Ubuntu 22.04 and 24.04; `.rpm` on Fedora; AppImage runs; signatures verify.
-- [ ] Update test: an installed previous version finds, downloads and installs this one between sessions; a tampered manifest is refused.
+- [ ] Update test: an installed previous version finds, downloads and installs this one between sessions; a tampered manifest is refused (see **Tampered update test** below).
 - [ ] Smoke test on each OS: onboarding, one practice line, session summary, export.
+
+## Tampered update test
+
+Run this after signed updater artifacts are enabled ([desktop-updater.md](desktop-updater.md)). Until `TAURI_SIGNING_PRIVATE_KEY` is in CI, the desktop stubs refuse updates with `updates require signing secrets` and this section is deferred.
+
+1. Install a build that is one patch behind the candidate release.
+2. Confirm a real update is offered **between sessions** (Today or session summary), never while a line is being typed.
+3. Apply the update once; confirm the new version launches and progress is intact.
+4. Tamper: edit `latest.json` on a local static host (or replace a `.sig` with garbage) while pointing the installed build at that endpoint (dev/test config only).
+5. Expect the updater to **refuse** the payload; the app must not install it and must leave learner data untouched.
+6. Restore a valid signed manifest and confirm a clean update still works.
+
+Record the OS, build versions and pass/fail in the Phase 3 gate notes.
 
 ## 5. Publish
 

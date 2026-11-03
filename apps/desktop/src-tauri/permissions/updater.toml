@@ -1,0 +1,7 @@
+[[permission]]
+identifier = "allow-updater-stub"
+description = "Allows stub check_for_update / apply_update until signing secrets exist (EU-046)"
+commands.allow = [
+  "check_for_update",
+  "apply_update"
+]

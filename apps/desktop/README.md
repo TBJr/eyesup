@@ -29,9 +29,25 @@ pnpm --filter @eyesup/desktop tauri build
 
 - Schema: `src-tauri/migrations/0001_init.sql` (includes streak / Commit Week / eyes-up points columns; not yet shipped, so edits stay in place)
 - On launch the shell opens `eyesup.sqlite3` under the OS app-data directory and applies the migration when the DB is empty
-- Tauri command `import_json` accepts an EyesUpExport JSON payload and replaces learner tables (web → desktop hand-off, EU-043)
+- Full `StorageAdapter` parity is wired: Rust commands in `sqlite_adapter.rs`, TypeScript bridge in `apps/web/src/storage/tauriSqliteAdapter.ts` via `window.__TAURI__.core.invoke` (`withGlobalTauri: true`)
+- `createStorageAdapter()` in the web app selects Tauri/SQLite inside the desktop shell and IndexedDB in the browser
+- `import_json` / `export_json` move EyesUpExport payloads for web ↔ desktop hand-off (EU-043); `delete_everything` clears learner tables
 
-A TypeScript `StorageAdapter` that invokes these commands is not wired into `App.svelte` yet; the web app still uses IndexedDB.
+## Window state (EU-048)
+
+- Geometry is stored in `window.json` next to `eyesup.sqlite3` in the app data dir: `{ x, y, width, height, fullscreen }`
+- Restored on launch; saved on move/resize (debounced) and on close
+- Practice UI calls `set_fullscreen` for the full-screen toggle
+
+## Updates (EU-046)
+
+Unsigned milestone: stub commands `check_for_update` / `apply_update` return `updates require signing secrets`. The web shell still has the between-session banner path. Enable the real Tauri updater when CI secrets exist — see [docs/desktop-updater.md](../../docs/desktop-updater.md).
+
+## Release builds (EU-044)
+
+- Workflow: [`.github/workflows/release.yml`](../../.github/workflows/release.yml) on `v*` tags or `workflow_dispatch`
+- Jobs: same checks as CI → matrix Tauri build (Ubuntu 22.04 `.deb`/`.rpm`/AppImage, macOS DMG, Windows MSI/NSIS) via `tauri-apps/tauri-action@v0` → draft GitHub release with SHA-256 checksums
+- Signing and updater artifacts stay skipped until `TAURI_SIGNING_PRIVATE_KEY` (and related secrets) are present — [docs/release-runbook.md](../../docs/release-runbook.md)
 
 ## Icons
 

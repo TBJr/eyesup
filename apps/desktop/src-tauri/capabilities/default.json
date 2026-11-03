@@ -1,7 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default EyesUp desktop capabilities. No network; storage stays on device.",
+  "description": "Default EyesUp desktop capabilities. No network; storage stays on device. Updater stub only until signing secrets exist.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    "allow-storage-adapter",
+    "allow-updater-stub",
+    "allow-window-state"
+  ]
 }

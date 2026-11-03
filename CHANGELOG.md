@@ -6,6 +6,13 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ### Added
 
+- Desktop first-launch import screen (`#/desktop-import`) for web JSON exports (EU-043).
+- Milestone writers for first blind line, all letters unlocked, crossover, and 30 WPM blind (FR-24).
+- Desktop release workflow (`.github/workflows/release.yml`) builds unsigned Linux, macOS and Windows installers and opens a draft GitHub release with checksums (EU-044).
+- Desktop window memory and practice full-screen toggle (`window.json` + `set_fullscreen`) (EU-048).
+- Desktop update stubs and between-session update banner wiring; signed updater docs for when secrets exist (EU-046).
+- Phase 3 product-owner checklist for beta gates, signing secret names, keyboard matrix and store submissions.
+- Desktop SQLite StorageAdapter parity: Tauri commands plus web bridge so the desktop shell uses SQLite and the browser keeps IndexedDB (EU-042).
 - Public landing page (`site-public/`) and Pages assemble step; phone hand-off route `#/device` (EU-041 / D2.2).
 - Progress heatmap, session history, milestones and crossover summary; Library own-text practise; Settings track/goal/sound (EU-037, EU-039, EU-051).
 - Beta checklist, synthetic Gate B fixtures, and Gate C supporting metrics in `pnpm beta-report`.

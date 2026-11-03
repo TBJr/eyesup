@@ -10,7 +10,8 @@ export type Route =
   | 'progress'
   | 'library'
   | 'settings'
-  | 'device';
+  | 'device'
+  | 'desktop-import';
 
 const DESTINATIONS: Route[] = [
   'today',
@@ -36,6 +37,7 @@ export function parseHash(hash: string): Route {
     'library',
     'settings',
     'device',
+    'desktop-import',
   ];
   return known.includes(route) ? route : 'today';
 }

@@ -1,36 +1,38 @@
-# Phase 3 report (scaffold)
+# Phase 3 report
 
-**Date:** 2026-11-03  
-**Branch:** `phase-2` (desktop lives alongside Phase 2 until a dedicated `phase-3` branch after Gate C)
+**Date:** 2026-11-04  
+**Branch:** `phase-3`
 
-## Delivered
+## Delivered (engineering)
 
 | Story | Status |
 | --- | --- |
-| EU-042 Tauri shell + SQLite | Scaffold: `apps/desktop` Tauri 2, migration, `import_json` command |
-| EU-043 Import web export | Rust `import_json` command implemented; wire from UI on first launch still needed |
-| EU-044 Installers | `tauri.conf.json` `bundle.targets = "all"`; CI jobs not yet added |
-| EU-045 Signing | Documented secret names in release runbook; no secrets in repo |
-| EU-046 Auto-updates | Not wired (needs signing keys + updater plugin) |
-| EU-047 Reminders | Not started (Could) |
-| EU-048 Window state | Default window size in conf; persistence not started (Should) |
-| EU-049 Matrix + stores | Owner/QA + store accounts |
+| EU-042 Tauri + SQLite StorageAdapter | Full invoke surface; web factory selects SQLite in desktop |
+| EU-043 Import web export | `#/desktop-import` first-launch file pick + `importJson` |
+| EU-044 Installers CI | `.github/workflows/release.yml` unsigned matrix + draft checksums |
+| EU-045 Signing | Conditional on secrets; names in runbook / owner checklist |
+| EU-046 Auto-updates | Stub commands + between-session banner; real plugin waits on keys |
+| EU-048 Window state | `window.json` restore; practice fullscreen toggle |
+| EU-047 Reminders | Deferred (Could) |
+| EU-049 Matrix + stores | Owner checklist only |
 
-## Tooling
+## Phase 2 close-out on this branch
 
-- `pnpm desktop:dev` / `pnpm build:desktop`
-- `node scripts/version-set.mjs X.Y.Z` (runbook)
+- Milestone writers (`first_blind_line`, `all_letters_unlocked`, `crossover_reached`, `first_30_wpm_blind`)
+- Phase 2 report marked engineering-complete
 
 ## Needs a person
 
-- Apple Developer Program, Windows signing, GPG, Tauri signing key pairs in CI secrets
-- Microsoft Store and Flathub submissions
-- Full keyboard matrix Gate D on Windows, macOS, Ubuntu, Kali, Fedora
-- Confirm ADR 0001 after matrix
+See [docs/phase-3-owner-checklist.md](../phase-3-owner-checklist.md):
 
-## Handover (D3.5) checklist
+- Gate B / Gate C from real exports
+- Signing secrets, notarization, Authenticode
+- Keyboard matrix Gate D; Microsoft Store / Flathub
+- Confirm ADR 0001; fill PRIVACY/SECURITY placeholders; second-person runbook test
 
-- [ ] README status current
+## Handover (D3.5)
+
+- [x] README status current
 - [ ] PRIVACY.md / SECURITY.md placeholders filled by product owner
 - [ ] Release runbook tested by a second person
 - [ ] CHANGELOG released section for first desktop version
