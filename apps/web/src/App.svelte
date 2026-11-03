@@ -2,21 +2,45 @@
   import { onMount } from 'svelte';
   import {
     BREAK_AFTER_CONTINUOUS_MINUTES,
-    createKeyStat,
+    canStartCommitWeek,
+    commitWeekComplete,
     createSeededRandom,
+    generateLine,
+    keyConfidence,
     netWpm,
     accuracy as metricAccuracy,
     planSession,
-    unlockedCodes,
+    unlockedTypingChars,
+    type GuideLevel,
     type Line,
     type Track,
   } from '@eyesup/engine';
   import en from '@eyesup/ui/strings/en.json';
+  import fr from '@eyesup/ui/strings/fr.json';
   import Keyboard from './components/Keyboard.svelte';
   import TypingSurface from './components/TypingSurface.svelte';
   import { applyDisplaySettings, DEFAULT_ACCESS } from './lib/display.js';
-  import { blocklist, LAYOUTS, letterModel, wordList } from './lib/content.js';
-  import { isDestination, navigate, parseHash, type Route } from './lib/router.js';
+  import { getContentPackForLayout, LAYOUTS } from './lib/content.js';
+  import {
+    buildSessionKeysAndPairs,
+    bumpKeyStatAfterLine,
+    unlockedGroupCountForTrack,
+  } from './lib/learnerFromStorage.js';
+  import {
+    TRACK_OPTIONS,
+    crossoverFromBaseline,
+    fillTemplate,
+    goalWpmOptions,
+    recentSessions,
+    splitOwnTextToLines,
+  } from './lib/progress.js';
+  import {
+    isDestination,
+    isTouchFirstDevice,
+    navigate,
+    parseHash,
+    type Route,
+  } from './lib/router.js';
   import {
     createFreshInput,
     createLinePlay,
@@ -27,16 +51,24 @@
   import { createIndexedDbAdapter } from './storage/indexedDbAdapter.js';
   import {
     STORAGE_SCHEMA_VERSION,
+    type BaselineRecord,
+    type KeyStatRecord,
+    type MilestoneRecord,
+    type OwnTextRecord,
     type ProfileRecord,
+    type SessionRecord,
     type StorageAdapter,
   } from './storage/types.js';
 
   const storage: StorageAdapter = createIndexedDbAdapter();
+  const GOAL_OPTIONS = goalWpmOptions(15, 80);
 
   let route = $state<Route>('welcome');
   let profile = $state<ProfileRecord | null>(null);
+  let baseline = $state<BaselineRecord | null>(null);
   let ready = $state(false);
   let updateWaiting = $state(false);
+  let deviceBanner = $state(false);
 
   // Onboarding
   let questionIndex = $state(0);
@@ -66,6 +98,19 @@
   let sessionActiveMs = $state(0);
   let notices = $state<string[]>([]);
   let levels = $state<Record<string, number>>({});
+  let timedTestMode = $state(false);
+  let timedTestEndsAt = $state(0);
+  let sessionKeyRecords = $state<KeyStatRecord[]>([]);
+
+  // Progress / library / today
+  let progressKeys = $state<KeyStatRecord[]>([]);
+  let progressSessions = $state<SessionRecord[]>([]);
+  let progressMilestones = $state<MilestoneRecord[]>([]);
+  let ownTexts = $state<OwnTextRecord[]>([]);
+  let ownTitle = $state('');
+  let ownBody = $state('');
+  let crossover = $state<ReturnType<typeof crossoverFromBaseline>>(null);
+  let commitEligible = $state(false);
 
   const questions = [
     { prompt: 'What do you type most days?', options: ['Writing and email', 'Code', 'Numbers and data', 'A mix'] },
@@ -88,17 +133,33 @@
     },
   ];
 
-  const orientSteps = [
-    en.orient.posture,
-    en.orient.home,
-    en.orient.zones,
-    en.orient.eFinger,
-    en.orient.rFinger,
-    en.orient.oFinger,
-  ];
-
   const layout = $derived(LAYOUTS[profile?.layoutId ?? detectedLayout] ?? LAYOUTS['qwerty-us']!);
+  const t = $derived(layout.language === 'fr' ? fr : en);
+  const orientSteps = $derived([
+    t.orient.posture,
+    t.orient.home,
+    t.orient.zones,
+    t.orient.eFinger,
+    t.orient.rFinger,
+    t.orient.oFinger,
+  ]);
   const currentLine = $derived(sessionLines[lineIndex]);
+  const historySessions = $derived([...recentSessions(progressSessions, 10)].reverse());
+
+  $effect(() => {
+    if (!ready || !profile) return;
+    if (route === 'progress' || route === 'today') {
+      void loadProgressData();
+    }
+    if (route === 'library') {
+      void loadOwnTexts();
+    }
+    if (route === 'settings') {
+      void (async () => {
+        baseline = await storage.getBaseline();
+      })();
+    }
+  });
 
   onMount(() => {
     const sync = () => {
@@ -109,6 +170,15 @@
 
     void (async () => {
       profile = await storage.getProfile();
+      baseline = await storage.getBaseline();
+      if (isTouchFirstDevice()) {
+        deviceBanner = true;
+        if (!window.location.hash || window.location.hash === '#/' || window.location.hash === '#') {
+          navigate('device');
+          ready = true;
+          return;
+        }
+      }
       if (profile) {
         applyDisplaySettings(profile.accessProfile);
         if (!window.location.hash || window.location.hash === '#/' || window.location.hash === '#') {
@@ -145,7 +215,39 @@
     };
   });
 
+  async function loadProgressData() {
+    if (!profile) return;
+    const [keys, sessions, milestones, base] = await Promise.all([
+      storage.getKeyStats(profile.layoutId),
+      storage.listSessions(),
+      storage.listMilestones(),
+      storage.getBaseline(),
+    ]);
+    progressKeys = keys;
+    progressSessions = sessions;
+    progressMilestones = milestones;
+    baseline = base;
+    crossover = crossoverFromBaseline(base, sessions);
+
+    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+    const unlocked = unlockedGroupCountForTrack(layoutObj, keys, profile.track);
+    const allLetters = unlocked >= layoutObj.learnOrder.length;
+    const blindWpms = sessions
+      .filter((s) => s.blindCheck && s.netWpm != null)
+      .map((s) => s.netWpm!);
+    const latestBlind = blindWpms.length > 0 ? blindWpms[blindWpms.length - 1]! : 0;
+    commitEligible = canStartCommitWeek({
+      allLettersUnlocked: allLetters,
+      blindWpm: latestBlind,
+    });
+  }
+
+  async function loadOwnTexts() {
+    ownTexts = await storage.listOwnTexts();
+  }
+
   function onGlobalKey(e: KeyboardEvent) {
+    if (route === 'device') return;
     if (route === 'welcome' && e.key === 'Enter') {
       navigate('orient');
       return;
@@ -175,10 +277,19 @@
       }
       return;
     }
-    if (route === 'result' && e.key === 'Enter') {
-      const needsOrient =
-        activeTrack === 'foundations' || placedTrack === 'retrain' || placedTrack === 'foundations';
-      navigate(needsOrient ? 'today' : 'today');
+    if (route === 'result') {
+      const n = Number(e.key);
+      if (n >= 1 && n <= TRACK_OPTIONS.length) {
+        activeTrack = TRACK_OPTIONS[n - 1]!;
+        if (profile) {
+          profile = { ...profile, track: activeTrack, updatedAt: new Date().toISOString() };
+          void storage.putProfile(profile);
+        }
+        return;
+      }
+      if (e.key === 'Enter') {
+        void continueFromResult();
+      }
       return;
     }
     if (route === 'today' && e.key === 'Enter') {
@@ -193,6 +304,7 @@
       if (sessionUi === 'unlockCard' && e.key === 'Enter') {
         sessionUi = 'typing';
         linePlay = { ...createLinePlay(), startedAt: performance.now() };
+        maybeArmTimedTest();
         return;
       }
       if (sessionUi === 'breakCard' && e.key === 'Enter') {
@@ -207,6 +319,7 @@
           location.reload();
           return;
         }
+        timedTestMode = false;
         navigate('today');
         return;
       }
@@ -221,6 +334,20 @@
       linePlay = result.line;
       sessionUi = result.ui;
       notices = result.notices;
+
+      if (result.ui === 'typing' && timedTestMode && timedTestEndsAt === 0) {
+        maybeArmTimedTest();
+      }
+      if (
+        timedTestMode &&
+        timedTestEndsAt > 0 &&
+        sessionUi === 'typing' &&
+        performance.now() >= timedTestEndsAt
+      ) {
+        endTimedTestEarly();
+        return;
+      }
+
       if (result.lineComplete) {
         const elapsed = Math.max(1, performance.now() - (linePlay.startedAt || performance.now()));
         lastLineWpm = netWpm(linePlay.caret, linePlay.errors.size, elapsed);
@@ -228,8 +355,37 @@
         sessionActiveMs += elapsed;
         continuousMs += elapsed;
         void persistLine();
+        void bumpKeysForCurrentLine();
       }
     }
+  }
+
+  function maybeArmTimedTest() {
+    if (timedTestMode && timedTestEndsAt === 0) {
+      timedTestEndsAt = performance.now() + 60_000;
+    }
+  }
+
+  function endTimedTestEarly() {
+    const elapsed = Math.max(1, performance.now() - (linePlay.startedAt || performance.now()));
+    lastLineWpm = netWpm(linePlay.caret, linePlay.errors.size, elapsed);
+    lastLineAcc = metricAccuracy(linePlay.correctFirst, Math.max(1, linePlay.totalKeys));
+    sessionActiveMs += elapsed;
+    sessionUi = 'summary';
+    void finishSession();
+  }
+
+  async function continueFromResult() {
+    if (profile) {
+      profile = {
+        ...profile,
+        track: activeTrack,
+        placedTrack,
+        updatedAt: new Date().toISOString(),
+      };
+      await storage.putProfile(profile);
+    }
+    navigate('today');
   }
 
   async function persistLine() {
@@ -251,12 +407,36 @@
     });
   }
 
+  async function bumpKeysForCurrentLine() {
+    if (!profile || !currentLine) return;
+    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+    const nowIso = new Date().toISOString();
+    const counts = new Map<string, number>();
+    for (const ch of currentLine.text) {
+      if (ch === ' ') continue;
+      const lower = ch.toLowerCase();
+      const code =
+        layoutObj.keys.find(
+          (k) => k.base?.toLowerCase() === lower || k.shift?.toLowerCase() === lower,
+        )?.code;
+      if (!code) continue;
+      counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+    const byCode = new Map(sessionKeyRecords.map((k) => [k.code, k]));
+    for (const [code, n] of counts) {
+      const next = bumpKeyStatAfterLine(byCode.get(code), profile.layoutId, code, nowIso, n);
+      byCode.set(code, next);
+      await storage.putKeyStat(next);
+    }
+    sessionKeyRecords = [...byCode.values()];
+  }
+
   function advanceAfterLine() {
     if (continuousMs >= BREAK_AFTER_CONTINUOUS_MINUTES * 60_000) {
       sessionUi = 'breakCard';
       return;
     }
-    if (lineIndex + 1 >= sessionLines.length) {
+    if (timedTestMode || lineIndex + 1 >= sessionLines.length) {
       sessionUi = 'summary';
       void finishSession();
       return;
@@ -279,6 +459,15 @@
         accuracy: lastLineAcc,
       });
     }
+    // Persist key levels / presses snapshot after summary
+    for (const rec of sessionKeyRecords) {
+      const level = levels[rec.code];
+      if (level != null && level !== rec.guideLevel) {
+        await storage.putKeyStat({ ...rec, guideLevel: level as GuideLevel });
+      } else {
+        await storage.putKeyStat(rec);
+      }
+    }
     const today = new Date().toISOString().slice(0, 10);
     let streak = profile.streakDays;
     if (profile.lastPracticeDate !== today) {
@@ -295,27 +484,39 @@
 
   async function startSession() {
     if (!profile) return;
+    timedTestMode = false;
+    timedTestEndsAt = 0;
     const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
-    const codes = unlockedCodes(layoutObj, Math.max(1, 1));
-    const keys = codes.map((code) => createKeyStat(code));
-    for (const k of keys) levels[k.code] = k.level;
+    const keyRecords = await storage.getKeyStats(profile.layoutId);
+    const pairRecords = await storage.getPairStats(profile.layoutId);
+    sessionKeyRecords = keyRecords;
 
+    const unlocked = unlockedGroupCountForTrack(layoutObj, keyRecords, profile.track);
+    const { keys, pairs, levels: nextLevels } = buildSessionKeysAndPairs(
+      layoutObj,
+      keyRecords,
+      pairRecords,
+      unlocked,
+    );
+    levels = nextLevels;
+
+    const pack = getContentPackForLayout(profile.layoutId);
     const plan = planSession({
       learner: {
         layoutId: profile.layoutId,
         track: profile.track,
         targetWpm: profile.targetWpm,
         goalWpm: profile.goalWpm,
-        unlockedGroupCount: 1,
+        unlockedGroupCount: unlocked,
         keys,
-        pairs: [],
+        pairs,
         sessionCount: (await storage.listSessions()).length,
         dailyMinutes: profile.dailyMinutes,
       },
       layout: layoutObj,
-      letterModel,
-      wordList,
-      blocklist,
+      letterModel: pack.letterModel,
+      wordList: pack.wordList,
+      blocklist: pack.blocklist,
       rng: createSeededRandom(Date.now() % 1_000_000),
       nowIso: new Date().toISOString(),
     });
@@ -340,6 +541,169 @@
       blindCheck: plan.includesBlindCheck,
     });
     navigate('practice');
+  }
+
+  async function startOwnTextPractice(text: OwnTextRecord) {
+    if (!profile) return;
+    const lines = splitOwnTextToLines(text.body);
+    if (lines.length === 0) return;
+    timedTestMode = false;
+    timedTestEndsAt = 0;
+    sessionLines = lines;
+    lineIndex = 0;
+    sessionUi = 'handsReady';
+    inputState = createFreshInput();
+    linePlay = createLinePlay();
+    continuousMs = 0;
+    sessionActiveMs = 0;
+    sessionKeyRecords = await storage.getKeyStats(profile.layoutId);
+    await storage.createSession({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      layoutId: profile.layoutId,
+      track: profile.track,
+      startedAt: new Date().toISOString(),
+      endedAt: null,
+      activeMs: 0,
+      netWpm: null,
+      accuracy: null,
+      blindShare: null,
+      peeks: 0,
+      blindCheck: false,
+    });
+    await storage.putOwnText({ ...text, practised: text.practised + 1 });
+    navigate('practice');
+  }
+
+  async function startTimedTest() {
+    if (!profile) return;
+    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+    const keyRecords = await storage.getKeyStats(profile.layoutId);
+    const unlocked = Math.max(
+      4,
+      unlockedGroupCountForTrack(layoutObj, keyRecords, profile.track),
+    );
+    const pack = getContentPackForLayout(profile.layoutId);
+    const chars = unlockedTypingChars(layoutObj, unlocked);
+    const focus = chars[0] ?? 'a';
+    const line = generateLine({
+      layout: layoutObj,
+      unlockedGroupCount: unlocked,
+      track: profile.track,
+      letterModel: pack.letterModel,
+      wordList: pack.wordList,
+      blocklist: pack.blocklist,
+      rng: createSeededRandom(Date.now() % 1_000_000),
+      focusChar: focus,
+      kind: 'timed_test',
+    });
+    timedTestMode = true;
+    timedTestEndsAt = 0;
+    sessionLines = [{ ...line, kind: 'timed_test' }];
+    lineIndex = 0;
+    sessionUi = 'handsReady';
+    inputState = createFreshInput();
+    linePlay = createLinePlay();
+    continuousMs = 0;
+    sessionActiveMs = 0;
+    sessionKeyRecords = keyRecords;
+    await storage.createSession({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      layoutId: profile.layoutId,
+      track: profile.track,
+      startedAt: new Date().toISOString(),
+      endedAt: null,
+      activeMs: 0,
+      netWpm: null,
+      accuracy: null,
+      blindShare: null,
+      peeks: 0,
+      blindCheck: false,
+    });
+    navigate('practice');
+  }
+
+  async function saveOwnText() {
+    const title = ownTitle.trim();
+    const body = ownBody.trim();
+    if (!body) return;
+    await storage.putOwnText({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      title: title || 'Untitled',
+      body,
+      kind: 'prose',
+      practised: 0,
+      bestWpm: null,
+      createdAt: new Date().toISOString(),
+    });
+    ownTitle = '';
+    ownBody = '';
+    await loadOwnTexts();
+  }
+
+  async function deleteOwnText(id: number) {
+    await storage.deleteOwnText(id);
+    await loadOwnTexts();
+  }
+
+  async function startCommitWeek() {
+    if (!profile) return;
+    profile = {
+      ...profile,
+      commitWeekStartedAt: new Date().toISOString(),
+      commitWeekCheckIns: 0,
+      updatedAt: new Date().toISOString(),
+    };
+    await storage.putProfile(profile);
+  }
+
+  async function checkInCommitWeek() {
+    if (!profile) return;
+    const next = (profile.commitWeekCheckIns ?? 0) + 1;
+    profile = {
+      ...profile,
+      commitWeekCheckIns: next,
+      updatedAt: new Date().toISOString(),
+    };
+    await storage.putProfile(profile);
+  }
+
+  async function switchToPlacedTrack() {
+    if (!profile || !baseline) return;
+    profile = {
+      ...profile,
+      track: baseline.placedTrack,
+      updatedAt: new Date().toISOString(),
+    };
+    await storage.putProfile(profile);
+  }
+
+  async function setTrack(track: Track) {
+    if (!profile) return;
+    profile = { ...profile, track, updatedAt: new Date().toISOString() };
+    await storage.putProfile(profile);
+  }
+
+  async function setGoalWpm(goalWpm: number) {
+    if (!profile) return;
+    const clamped = Math.min(80, Math.max(15, goalWpm));
+    profile = {
+      ...profile,
+      goalWpm: clamped,
+      targetWpm: Math.min(profile.targetWpm, clamped),
+      updatedAt: new Date().toISOString(),
+    };
+    await storage.putProfile(profile);
+  }
+
+  async function setSound(sound: boolean) {
+    if (!profile) return;
+    profile = {
+      ...profile,
+      accessProfile: { ...profile.accessProfile, sound },
+      updatedAt: new Date().toISOString(),
+    };
+    applyDisplaySettings(profile.accessProfile);
+    await storage.putProfile(profile);
   }
 
   async function finishProbesAndPlace() {
@@ -374,6 +738,7 @@
       id: 1,
       layoutId: detectedLayout,
       track: activeTrack,
+      placedTrack,
       overlays: [],
       accessProfile: access,
       dailyMinutes: daily,
@@ -385,11 +750,14 @@
       lastPracticeDate: null,
       restDaysUsedThisWeek: 0,
       weekStartIso: null,
+      eyesUpPoints: 0,
+      commitWeekStartedAt: null,
+      commitWeekCheckIns: 0,
       createdAt: now,
       updatedAt: now,
     };
     await storage.putProfile(profile);
-    await storage.putBaseline({
+    const base: BaselineRecord = {
       schemaVersion: STORAGE_SCHEMA_VERSION,
       id: 1,
       answers,
@@ -403,7 +771,9 @@
       detectedLayoutId: detectedLayout,
       placedTrack,
       takenAt: now,
-    });
+    };
+    await storage.putBaseline(base);
+    baseline = base;
     applyDisplaySettings(access);
     navigate('result');
   }
@@ -412,7 +782,6 @@
     if (!probeAStarted) probeAStarted = performance.now();
     if (e.key.length === 1) {
       probeAChars += 1;
-      // fingerprint: first hits of Q/Y/E
       if (e.code === 'KeyQ' && e.key.toLowerCase() === 'a') detectedLayout = 'azerty-fr';
       if (e.code === 'KeyQ' && e.key.toLowerCase() === 'q') detectedLayout = 'qwerty-us';
     }
@@ -450,10 +819,11 @@
   }
 
   async function deleteAll() {
-    const ok = window.prompt(en.settings.deleteConfirm);
+    const ok = window.prompt(t.settings.deleteConfirm);
     if (ok !== 'DELETE') return;
     await storage.deleteEverything();
     profile = null;
+    baseline = null;
     navigate('welcome');
   }
 
@@ -479,32 +849,66 @@
     applyDisplaySettings(profile.accessProfile);
     void storage.putProfile(profile);
   }
+
+  function confidenceForKey(rec: KeyStatRecord): number {
+    if (!profile) return rec.confidence;
+    return keyConfidence(
+      {
+        code: rec.code,
+        accuracy: rec.accuracy,
+        timeToTypeMs: rec.timeToTypeMs ?? 400,
+        recentIntervalsMs: rec.recentIntervalsMs,
+        recentFirstAttempts: rec.recentFirstAttempts,
+        sessionsWithKey: rec.sessionsWithKey,
+        presses: rec.presses,
+        level: rec.guideLevel,
+        lastPractisedIso: rec.lastPractised ?? undefined,
+        stableSessions: rec.stableSessions,
+      },
+      profile.targetWpm,
+    );
+  }
+
+  function copyAppLink() {
+    void navigator.clipboard?.writeText(window.location.href.replace(/#.*$/, ''));
+  }
 </script>
 
 <svelte:window onkeydown={onGlobalKey} />
 
 {#if !ready}
-  <main class="page"><p>{en.app.name}</p></main>
+  <main class="page"><p>{t.app.name}</p></main>
 {:else}
   {#if isDestination(route) && profile}
-    <nav class="nav" aria-label={en.nav.label}>
-      <a href="#/today" aria-current={route === 'today' ? 'page' : undefined}>{en.nav.today}</a>
-      <a href="#/practice" aria-current={route === 'practice' ? 'page' : undefined}>{en.nav.practice}</a>
-      <a href="#/progress" aria-current={route === 'progress' ? 'page' : undefined}>{en.nav.progress}</a>
-      <a href="#/library" aria-current={route === 'library' ? 'page' : undefined}>{en.nav.library}</a>
-      <a href="#/settings" aria-current={route === 'settings' ? 'page' : undefined}>{en.nav.settings}</a>
+    <nav class="nav" aria-label={t.nav.label}>
+      <a href="#/today" aria-current={route === 'today' ? 'page' : undefined}>{t.nav.today}</a>
+      <a href="#/practice" aria-current={route === 'practice' ? 'page' : undefined}>{t.nav.practice}</a>
+      <a href="#/progress" aria-current={route === 'progress' ? 'page' : undefined}>{t.nav.progress}</a>
+      <a href="#/library" aria-current={route === 'library' ? 'page' : undefined}>{t.nav.library}</a>
+      <a href="#/settings" aria-current={route === 'settings' ? 'page' : undefined}>{t.nav.settings}</a>
     </nav>
   {/if}
 
+  {#if deviceBanner && route !== 'device'}
+    <aside class="device-banner" role="status">
+      <p>{t.device.body}</p>
+      <a href="#/device">{t.device.title}</a>
+    </aside>
+  {/if}
+
   <main class="page" data-route={route}>
-    {#if route === 'welcome'}
-      <h1>{en.welcome.title}</h1>
-      <p>{en.welcome.body}</p>
-      <p class="hint">{en.welcome.start}</p>
+    {#if route === 'device'}
+      <h1>{t.device.title}</h1>
+      <p>{t.device.body}</p>
+      <button type="button" onclick={copyAppLink}>{t.device.copy}</button>
+    {:else if route === 'welcome'}
+      <h1>{t.welcome.title}</h1>
+      <p>{t.welcome.body}</p>
+      <p class="hint">{t.welcome.start}</p>
     {:else if route === 'orient'}
-      <h1>{en.orient.title}</h1>
+      <h1>{t.orient.title}</h1>
       <p>{orientSteps[orientStep]}</p>
-      <p class="hint">{en.orient.next}</p>
+      <p class="hint">{t.orient.next}</p>
       <Keyboard {layout} mode="zones" hands="rest" numbers={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
     {:else if route === 'questions'}
       {@const q = questions[questionIndex]!}
@@ -517,62 +921,115 @@
           </li>
         {/each}
       </ol>
-      <p class="hint">{q.multi ? en.questions.toggle : en.questions.continue}</p>
+      <p class="hint">{q.multi ? t.questions.toggle : t.questions.continue}</p>
     {:else if route === 'probe-a'}
-      <h1>{en.probeA.title}</h1>
-      <p>{en.probeA.hint}</p>
+      <h1>{t.probeA.title}</h1>
+      <p>{t.probeA.hint}</p>
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <pre class="probe" tabindex="0" onkeydown={onProbeAKey}>{en.probeA.passage}</pre>
+      <pre class="probe" tabindex="0" onkeydown={onProbeAKey}>{t.probeA.passage}</pre>
     {:else if route === 'probe-b'}
-      <h1>{en.probeB.title}</h1>
-      <p>{probeBHome < 4 ? en.probeB.home : en.probeB.blind}</p>
+      <h1>{t.probeB.title}</h1>
+      <p>{probeBHome < 4 ? t.probeB.home : t.probeB.blind}</p>
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <pre class="probe" tabindex="0" onkeydown={onProbeBKey}>{probeBHome < 4 ? en.probeB.homeLabel : en.probeB.passage}</pre>
+      <pre class="probe" tabindex="0" onkeydown={onProbeBKey}>{probeBHome < 4 ? t.probeB.homeLabel : t.probeB.passage}</pre>
     {:else if route === 'result'}
-      <h1>{en.result.title}</h1>
-      <p data-testid="active-track">{activeTrack}</p>
-      <p>{en.result.reason}: {placementReason}</p>
-      <p>{en.result.layout}: {detectedLayout}</p>
-      <p class="hint">{en.result.continue}</p>
+      <h1>{t.result.title}</h1>
+      <p>{t.result.reason}: {placementReason}</p>
+      <p>{t.result.layout}: {detectedLayout}</p>
+      <p data-testid="placed-track">placed: {placedTrack}</p>
+      <p data-testid="active-track">active: {activeTrack}</p>
+      <label>
+        {t.result.override}
+        <select
+          value={activeTrack}
+          onchange={(e) => {
+            activeTrack = e.currentTarget.value as Track;
+            if (profile) {
+              profile = { ...profile, track: activeTrack, updatedAt: new Date().toISOString() };
+              void storage.putProfile(profile);
+            }
+          }}
+        >
+          {#each TRACK_OPTIONS as tr, i}
+            <option value={tr}>{i + 1}. {tr}</option>
+          {/each}
+        </select>
+      </label>
+      <p class="hint">{t.result.continue}</p>
     {:else if route === 'today'}
-      <h1>{en.today.title}</h1>
-      <p>{en.today.streak}: {profile?.streakDays ?? 0} {en.today.days}</p>
-      <p>{en.today.goal}: {profile?.goalWpm ?? 30} {en.practice.wpm}</p>
-      <p class="hint">{en.today.start}</p>
+      <h1>{t.today.title}</h1>
+      <p>{t.today.streak}: {profile?.streakDays ?? 0} {t.today.days}</p>
+      <p>{t.today.goal}: {profile?.goalWpm ?? 30} {t.practice.wpm}</p>
+      {#if profile?.track === 'retrain'}
+        <p role="note">{t.today.dipExplainer}</p>
+      {/if}
+      {#if crossover && baseline}
+        <section aria-labelledby="today-crossover">
+          <h2 id="today-crossover">{t.today.crossover}</h2>
+          {#if crossover.crossed}
+            <p>{t.today.crossoverReached}</p>
+          {:else}
+            <p>{t.today.crossover}: {crossover.gap.toFixed(1)} {t.practice.wpm}</p>
+            {#if crossover.projectedSessionsFromNow != null}
+              <p>{fillTemplate(t.today.crossoverProjected, crossover.projectedSessionsFromNow)}</p>
+            {/if}
+          {/if}
+        </section>
+      {/if}
+      {#if profile}
+        {@const started = profile.commitWeekStartedAt}
+        {@const checkIns = profile.commitWeekCheckIns ?? 0}
+        {@const done = commitWeekComplete(checkIns)}
+        {#if started && !done}
+          <section aria-labelledby="commit-week">
+            <h2 id="commit-week">{t.today.commitWeek}</h2>
+            <p>{fillTemplate(t.today.commitWeekProgress, checkIns)}</p>
+            <button type="button" onclick={() => void checkInCommitWeek()}>{t.today.commitWeekCheckIn}</button>
+          </section>
+        {:else if commitEligible && !started}
+          <section aria-labelledby="commit-week">
+            <h2 id="commit-week">{t.today.commitWeek}</h2>
+            <p>{t.today.commitWeekOffer}</p>
+            <button type="button" onclick={() => void startCommitWeek()}>{t.today.commitWeekStart}</button>
+          </section>
+        {/if}
+      {/if}
+      <p class="hint">{t.today.start}</p>
       {#if updateWaiting}
-        <p role="status">{en.update.ready}</p>
+        <p role="status">{t.update.ready}</p>
       {/if}
     {:else if route === 'practice'}
       {#if sessionUi === 'handsReady'}
-        <h1>{en.practice.handsReady}</h1>
+        <h1>{t.practice.handsReady}</h1>
         <Keyboard {layout} mode="levels" hands="rest" target="KeyF" {levels} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
       {:else if sessionUi === 'paused'}
-        <p role="status">{en.practice.paused}</p>
+        <p role="status">{t.practice.paused}</p>
       {:else if sessionUi === 'lineResult'}
-        <h1>{en.practice.lineResult}</h1>
-        <p>{en.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
-        <p>{en.practice.accuracy}: {(lastLineAcc * 100).toFixed(0)}%</p>
-        <p class="hint">{en.questions.continue}</p>
+        <h1>{t.practice.lineResult}</h1>
+        <p>{t.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
+        <p>{t.practice.accuracy}: {(lastLineAcc * 100).toFixed(0)}%</p>
+        <p class="hint">{t.questions.continue}</p>
       {:else if sessionUi === 'breakCard'}
-        <h1>{en.practice.break}</h1>
-        <p class="hint">{en.practice.breakSkip}</p>
+        <h1>{t.practice.break}</h1>
+        <p class="hint">{t.practice.breakSkip}</p>
       {:else if sessionUi === 'unlockCard'}
-        <h1>{en.practice.unlock}</h1>
+        <h1>{t.practice.unlock}</h1>
         <Keyboard {layout} mode="zones" hands="reach" target="KeyK" {levels} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
-        <p class="hint">{en.practice.unlockStart}</p>
+        <p class="hint">{t.practice.unlockStart}</p>
       {:else if sessionUi === 'summary'}
-        <h1>{en.practice.summary}</h1>
-        <p>{en.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
-        <p class="hint">{en.practice.done}</p>
+        <h1>{t.practice.summary}</h1>
+        <p>{t.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
+        <p class="hint">{t.practice.done}</p>
       {:else if currentLine}
         {#if notices.includes('caps_lock')}
-          <p role="status">{en.practice.capsLock}</p>
+          <p role="status">{t.practice.capsLock}</p>
         {/if}
         {#if inputState.peeking}
-          <p role="status">{en.practice.peek}</p>
+          <p role="status">{t.practice.peek}</p>
         {/if}
+        <!-- No live WPM while typing (required for foundations/retrain; line result still shows WPM). -->
         <TypingSurface text={currentLine.text} caret={linePlay.caret} errors={linePlay.errors} marked={linePlay.marked} />
         <Keyboard
           {layout}
@@ -584,16 +1041,100 @@
         />
       {/if}
     {:else if route === 'progress'}
-      <h1>{en.progress.title}</h1>
-      <p>{en.progress.placeholder}</p>
+      <h1>{t.progress.title}</h1>
+      <p>{t.progress.eyesUpPoints}: {profile?.eyesUpPoints ?? 0}</p>
+      <section aria-labelledby="heatmap-heading">
+        <h2 id="heatmap-heading">{t.progress.heatmap}</h2>
+        <p class="hint">{t.progress.heatmapHint}</p>
+        <ul class="heatmap" role="list">
+          {#each progressKeys as rec}
+            {@const conf = confidenceForKey(rec)}
+            <li
+              class="heat-cell"
+              style={`--conf: ${conf}; background-color: color-mix(in srgb, var(--color-accent, #2f6fed) ${Math.round(conf * 100)}%, transparent); opacity: ${0.35 + conf * 0.65}`}
+              title={`${rec.code}: ${Math.round(conf * 100)}%`}
+            >
+              <span class="heat-code">{rec.code.replace(/^Key/, '')}</span>
+              <span class="heat-pct">{Math.round(conf * 100)}%</span>
+            </li>
+          {:else}
+            <li class="hint">{t.progress.noSessions}</li>
+          {/each}
+        </ul>
+      </section>
+      <section aria-labelledby="history-heading">
+        <h2 id="history-heading">{t.progress.history}</h2>
+        {#if historySessions.length === 0}
+          <p>{t.progress.noSessions}</p>
+        {:else}
+          <ol class="history">
+            {#each historySessions as s}
+              <li>
+                {(s.netWpm ?? 0).toFixed(0)} {t.practice.wpm}
+                · {((s.accuracy ?? 0) * 100).toFixed(0)}%
+              </li>
+            {/each}
+          </ol>
+        {/if}
+      </section>
+      <section aria-labelledby="milestones-heading">
+        <h2 id="milestones-heading">{t.progress.milestones}</h2>
+        {#if progressMilestones.length === 0}
+          <p>{t.progress.noMilestones}</p>
+        {:else}
+          <ul>
+            {#each progressMilestones as m}
+              <li>{m.id} — {m.reachedAt.slice(0, 10)}</li>
+            {/each}
+          </ul>
+        {/if}
+      </section>
+      {#if crossover && baseline}
+        <section aria-labelledby="progress-crossover">
+          <h2 id="progress-crossover">{t.progress.crossover}</h2>
+          {#if crossover.crossed}
+            <p>{t.today.crossoverReached}</p>
+          {:else}
+            <p>{t.today.crossover}: {crossover.gap.toFixed(1)}</p>
+            {#if crossover.projectedSessionsFromNow != null}
+              <p>{fillTemplate(t.today.crossoverProjected, crossover.projectedSessionsFromNow)}</p>
+            {/if}
+          {/if}
+        </section>
+      {/if}
     {:else if route === 'library'}
-      <h1>{en.library.title}</h1>
-      <button type="button" onclick={() => { orientStep = 0; navigate('orient'); }}>{en.library.orient}</button>
+      <h1>{t.library.title}</h1>
+      <button type="button" onclick={() => { orientStep = 0; navigate('orient'); }}>{t.library.orient}</button>
+      <button type="button" onclick={() => void startTimedTest()}>{t.library.timedTestStart}</button>
+      <section aria-labelledby="own-text-heading">
+        <h2 id="own-text-heading">{t.library.ownText}</h2>
+        <label>
+          {t.library.ownTextTitle}
+          <input type="text" bind:value={ownTitle} />
+        </label>
+        <label>
+          {t.library.ownTextBody}
+          <textarea rows="5" bind:value={ownBody}></textarea>
+        </label>
+        <button type="button" onclick={() => void saveOwnText()}>{t.library.ownTextSave}</button>
+        {#if ownTexts.length === 0}
+          <p>{t.library.ownTextEmpty}</p>
+        {:else}
+          <ul class="own-list">
+            {#each ownTexts as text}
+              <li>
+                <strong>{text.title}</strong>
+                <button type="button" onclick={() => void startOwnTextPractice(text)}>{t.library.ownTextPractise}</button>
+                <button type="button" onclick={() => void deleteOwnText(text.id)}>{t.library.ownTextDelete}</button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </section>
     {:else if route === 'settings'}
-      <h1>{en.settings.title}</h1>
-      <p>{en.settings.layout}: {profile?.layoutId}</p>
+      <h1>{t.settings.title}</h1>
       <label>
-        {en.settings.layout}
+        {t.settings.layout}
         <select
           value={profile?.layoutId}
           onchange={(e) => {
@@ -602,20 +1143,52 @@
             void storage.putProfile(profile);
           }}
         >
-          <option value="qwerty-us">{en.layouts.qwertyUs}</option>
-          <option value="qwerty-uk">{en.layouts.qwertyUk}</option>
-          <option value="azerty-fr">{en.layouts.azertyFr}</option>
+          <option value="qwerty-us">{t.layouts.qwertyUs}</option>
+          <option value="qwerty-uk">{t.layouts.qwertyUk}</option>
+          <option value="azerty-fr">{t.layouts.azertyFr}</option>
         </select>
       </label>
-      <p>{en.settings.track}: {profile?.track}</p>
-      <p>{en.settings.goal}: {profile?.goalWpm}</p>
-      <p>{en.settings.textSize}: {profile?.accessProfile.textSizePx}</p>
-      <button type="button" onclick={() => setTextSize(-2)}>{en.controls.smaller}</button>
-      <button type="button" onclick={() => setTextSize(2)}>{en.controls.larger}</button>
+      <label>
+        {t.settings.track}
+        <select
+          value={profile?.track}
+          onchange={(e) => void setTrack(e.currentTarget.value as Track)}
+        >
+          {#each TRACK_OPTIONS as tr}
+            <option value={tr}>{tr}</option>
+          {/each}
+        </select>
+      </label>
+      <p class="hint">{t.settings.trackKeepProgress}</p>
+      {#if baseline && profile && baseline.placedTrack !== profile.track}
+        <button type="button" onclick={() => void switchToPlacedTrack()}>{t.settings.switchPlaced}</button>
+      {/if}
+      <label>
+        {t.settings.goal}
+        <select
+          value={profile?.goalWpm}
+          onchange={(e) => void setGoalWpm(Number(e.currentTarget.value))}
+        >
+          {#each GOAL_OPTIONS as w}
+            <option value={w}>{w}</option>
+          {/each}
+        </select>
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={profile?.accessProfile.sound}
+          onchange={(e) => void setSound(e.currentTarget.checked)}
+        />
+        {t.settings.sound}
+      </label>
+      <p>{t.settings.textSize}: {profile?.accessProfile.textSizePx}</p>
+      <button type="button" onclick={() => setTextSize(-2)}>{t.controls.smaller}</button>
+      <button type="button" onclick={() => setTextSize(2)}>{t.controls.larger}</button>
       <div>
-        <button type="button" onclick={() => setTheme('light')}>{en.settings.themeLight}</button>
-        <button type="button" onclick={() => setTheme('dark')}>{en.settings.themeDark}</button>
-        <button type="button" onclick={() => setTheme('high-contrast')}>{en.settings.themeHighContrast}</button>
+        <button type="button" onclick={() => setTheme('light')}>{t.settings.themeLight}</button>
+        <button type="button" onclick={() => setTheme('dark')}>{t.settings.themeDark}</button>
+        <button type="button" onclick={() => setTheme('high-contrast')}>{t.settings.themeHighContrast}</button>
       </div>
       <label>
         <input
@@ -632,10 +1205,60 @@
             void storage.putProfile(profile);
           }}
         />
-        {en.settings.reducedMotion}
+        {t.settings.reducedMotion}
       </label>
-      <button type="button" onclick={() => void exportData()}>{en.settings.export}</button>
-      <button type="button" onclick={() => void deleteAll()}>{en.settings.delete}</button>
+      <label>
+        {t.settings.fingerMap}
+        <select
+          value={profile?.accessProfile.fingerMap ?? 'default'}
+          onchange={(e) => {
+            const current = profile;
+            if (!current) return;
+            const { fingerMap: _omit, ...restAccess } = current.accessProfile;
+            const value = e.currentTarget.value;
+            const accessProfile =
+              value === 'default' ? restAccess : { ...restAccess, fingerMap: value };
+            const next = {
+              ...current,
+              accessProfile,
+              updatedAt: new Date().toISOString(),
+            };
+            profile = next;
+            applyDisplaySettings(next.accessProfile);
+            void storage.putProfile(next);
+          }}
+        >
+          <option value="default">{t.settings.fingerMapDefault}</option>
+          <option value="one-hand-left">{t.settings.fingerMapOneHandLeft}</option>
+          <option value="one-hand-right">{t.settings.fingerMapOneHandRight}</option>
+          <option value="reduced">{t.settings.fingerMapReduced}</option>
+        </select>
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={profile?.accessProfile.font === 'dyslexia'}
+          onchange={(e) => {
+            const current = profile;
+            if (!current) return;
+            const { font: _omit, ...restAccess } = current.accessProfile;
+            const accessProfile = e.currentTarget.checked
+              ? { ...restAccess, font: 'dyslexia' }
+              : restAccess;
+            const next = {
+              ...current,
+              accessProfile,
+              updatedAt: new Date().toISOString(),
+            };
+            profile = next;
+            applyDisplaySettings(next.accessProfile);
+            void storage.putProfile(next);
+          }}
+        />
+        {t.settings.dyslexiaFont}
+      </label>
+      <button type="button" onclick={() => void exportData()}>{t.settings.export}</button>
+      <button type="button" onclick={() => void deleteAll()}>{t.settings.delete}</button>
     {/if}
   </main>
 {/if}
@@ -661,15 +1284,36 @@
     color: var(--color-accent, #2f6fed);
     font-weight: 700;
   }
-  h1 {
+  h1, h2 {
     font-family: var(--font-family-ui, sans-serif);
+  }
+  h1 {
     font-size: 1.75rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+    margin-top: 1.5rem;
   }
   p,
   li,
   label,
-  button {
+  button,
+  input,
+  textarea,
+  select {
     font-family: var(--font-family-ui, sans-serif);
+  }
+  label {
+    display: block;
+    margin: 0.75rem 0;
+  }
+  input[type='text'],
+  textarea,
+  select {
+    display: block;
+    width: 100%;
+    max-width: 28rem;
+    margin-top: 0.25rem;
   }
   .hint {
     color: var(--color-ink-secondary, #5b616b);
@@ -687,6 +1331,45 @@
     border: 1px solid var(--color-border-subtle, #c9ced6);
     font-family: var(--font-family-practice, monospace);
     white-space: pre-wrap;
+  }
+  .heatmap {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
+    gap: 0.35rem;
+    list-style: none;
+    padding: 0;
+  }
+  .heat-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.35rem;
+    border: 1px solid var(--color-border-subtle, #c9ced6);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+  }
+  .heat-pct {
+    font-variant-numeric: tabular-nums;
+  }
+  .history {
+    padding-left: 1.25rem;
+  }
+  .own-list {
+    list-style: none;
+    padding: 0;
+  }
+  .own-list li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0.5rem 0;
+  }
+  .device-banner {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-surface-raised, #efece4);
+    border-bottom: 1px solid var(--color-border-subtle, #c9ced6);
+    font-family: var(--font-family-ui, sans-serif);
   }
   :global(:focus-visible) {
     outline: 2px solid var(--color-accent, #2f6fed);

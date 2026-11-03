@@ -37,16 +37,25 @@ export {
   BLOCK_WARMUP_SHARE,
   BLOCK_WORDS_TEXT_SHARE,
   BREAK_AFTER_CONTINUOUS_MINUTES,
+  COMMIT_WEEK_BLIND_WPM,
+  COMMIT_WEEK_DAYS,
   CONFIDENCE_ACCURACY_CAP,
   CONFIDENCE_TIME_NUMERATOR_MS,
+  CROSSOVER_PROJECTION_SESSIONS,
   DEFAULT_GOAL_WPM,
   DRILL_ONLY_MAX_GROUP,
+  EYES_UP_POINTS_L0,
+  EYES_UP_POINTS_L1,
+  EYES_UP_POINTS_L2,
+  EYES_UP_POINTS_L3,
   FADE_LEVEL1_ACCURACY,
   FADE_LEVEL1_MIN_SESSIONS,
   FADE_LEVEL2_SPEED_FRACTION,
   FADE_LEVEL3_CONSECUTIVE_SESSIONS,
   FADE_PRESS_WINDOW,
   FADE_STEP_BACK_ACCURACY,
+  FLUENCY_DEFAULT_GOAL_WPM,
+  FLUENCY_TARGET_RISE_WPM,
   FOCUS_SHARE_MAX,
   FOCUS_SHARE_MIN,
   FOUNDATIONS_MAX_SAME_FINGER_STREAK,
@@ -60,6 +69,8 @@ export {
   PLACEMENT_SIGHTED_WPM_THRESHOLD,
   PLACEMENT_TIE_BAND,
   PSEUDO_WORDS_MIN_GROUP,
+  RETRAIN_FULL_GROUPS_BEFORE_MERGE,
+  RETRAIN_GROUP_MERGE_SIZE,
   REVIEW_CONFIDENCE_THRESHOLD,
   REVIEW_INTERVAL_MAX_DAYS,
   SESSION_LINES_PER_MINUTE,
@@ -79,15 +90,19 @@ export {
   confidence,
   createKeyStat,
   createPairStat,
+  effectiveUnlockGroupCount,
   endSessionFadeUpdate,
+  fluencyTargetAfterSession,
   isDueForReview,
   keyConfidence,
   pairConfidence,
   recordKeyInterval,
   recordKeyPress,
   recordPairPress,
+  retrainPhysicalGroups,
   reviewIntervalDays,
   selectFocusKey,
+  slowestPairs,
   startingTargetWpm,
   targetMsPerChar,
   targetWpmAfterUnlocks,
@@ -106,6 +121,19 @@ export {
   peekRate,
   rolloverShare,
 } from './metrics.js';
+
+export {
+  projectCrossoverSession,
+  type CrossoverProjection,
+} from './crossover.js';
+
+export { eyesUpPoints } from './points.js';
+
+export {
+  canStartCommitWeek,
+  commitWeekComplete,
+  type CanStartCommitWeekArgs,
+} from './commitWeek.js';
 
 export { createSeededRandom, type SeededRandom } from './random.js';
 

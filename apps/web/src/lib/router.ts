@@ -9,7 +9,8 @@ export type Route =
   | 'practice'
   | 'progress'
   | 'library'
-  | 'settings';
+  | 'settings'
+  | 'device';
 
 const DESTINATIONS: Route[] = [
   'today',
@@ -34,8 +35,20 @@ export function parseHash(hash: string): Route {
     'progress',
     'library',
     'settings',
+    'device',
   ];
   return known.includes(route) ? route : 'today';
+}
+
+/** Touch-first device with no fine pointer / hover — soft keyboard hand-off (EU-041). */
+export function isTouchFirstDevice(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+  return (
+    window.matchMedia('(pointer: coarse)').matches &&
+    !window.matchMedia('(hover: hover)').matches
+  );
 }
 
 export function navigate(route: Route): void {

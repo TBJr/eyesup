@@ -1,7 +1,7 @@
 /** Learning track from onboarding placement (§03). */
 export type Track = 'foundations' | 'retrain' | 'adaptive' | 'fluency';
 
-/** Generated / scheduled practice line kind (§04 lesson anatomy, C18). */
+/** Generated / scheduled practice line kind (§04 lesson anatomy, C18, FR-20). */
 export type LineKind =
   | 'warmup'
   | 'key_drill'
@@ -10,7 +10,10 @@ export type LineKind =
   | 'real_words'
   | 'mixed_review'
   | 'blind_check'
-  | 'cool_down';
+  | 'cool_down'
+  | 'metronome'
+  | 'rollover_drill'
+  | 'timed_test';
 
 /** Guide fade level L0–L3 (§02 / C17). */
 export type GuideLevel = 0 | 1 | 2 | 3;

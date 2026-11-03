@@ -8,8 +8,12 @@ import {
   FADE_LEVEL3_CONSECUTIVE_SESSIONS,
   FADE_PRESS_WINDOW,
   FADE_STEP_BACK_ACCURACY,
+  FLUENCY_TARGET_RISE_WPM,
+  RETRAIN_FULL_GROUPS_BEFORE_MERGE,
+  RETRAIN_GROUP_MERGE_SIZE,
   REVIEW_CONFIDENCE_THRESHOLD,
   REVIEW_INTERVAL_MAX_DAYS,
+  SLOWEST_PAIR_DRILL_COUNT,
   TARGET_WPM_FOUNDATIONS_START,
   TARGET_WPM_INCREMENT_PER_UNLOCK,
   TARGET_WPM_OTHER_TRACK_PROBE_FRACTION,
@@ -391,4 +395,75 @@ export function tryUnlockNextGroup(learner: Learner): Learner {
       learner.targetWpm + TARGET_WPM_INCREMENT_PER_UNLOCK,
     ),
   };
+}
+
+/**
+ * Map Retrain logical unlock count to physical learn-order groups (EU-031 PO default).
+ * First RETRAIN_FULL_GROUPS_BEFORE_MERGE unlocks are 1:1; later unlocks advance by
+ * RETRAIN_GROUP_MERGE_SIZE physical groups each.
+ */
+export function retrainPhysicalGroups(
+  logicalUnlocked: number,
+  totalGroups: number,
+): number {
+  if (logicalUnlocked <= 0) {
+    return 0;
+  }
+  if (logicalUnlocked <= RETRAIN_FULL_GROUPS_BEFORE_MERGE) {
+    return Math.min(logicalUnlocked, totalGroups);
+  }
+  const mergedSteps = logicalUnlocked - RETRAIN_FULL_GROUPS_BEFORE_MERGE;
+  const physical =
+    RETRAIN_FULL_GROUPS_BEFORE_MERGE + mergedSteps * RETRAIN_GROUP_MERGE_SIZE;
+  return Math.min(physical, totalGroups);
+}
+
+/**
+ * Unlock count used for generation / layout prefixes.
+ * Retrain maps logical unlocks through retrainPhysicalGroups; other tracks pass through.
+ */
+export function effectiveUnlockGroupCount(
+  layoutGroupCount: number,
+  unlockedGroupCount: number,
+  track: Track,
+): number {
+  if (track === 'retrain') {
+    return retrainPhysicalGroups(unlockedGroupCount, layoutGroupCount);
+  }
+  return Math.min(Math.max(0, unlockedGroupCount), layoutGroupCount);
+}
+
+/**
+ * Slowest letter pairs by ascending pair confidence (§04 Chunk / FR-20).
+ */
+export function slowestPairs(
+  pairs: readonly PairStat[],
+  targetWpm: number,
+  count: number = SLOWEST_PAIR_DRILL_COUNT,
+): PairStat[] {
+  return [...pairs]
+    .sort((a, b) => {
+      const ca = pairConfidence(a, targetWpm);
+      const cb = pairConfidence(b, targetWpm);
+      if (ca !== cb) {
+        return ca - cb;
+      }
+      return a.pair.localeCompare(b.pair);
+    })
+    .slice(0, Math.max(0, count));
+}
+
+/**
+ * Fluency target rise after a session where the slowest pairs improved (EU-033 PO default).
+ * Caller may pass `pairsImproved` directly when that is easier than recomputing means.
+ */
+export function fluencyTargetAfterSession(
+  currentTargetWpm: number,
+  goalWpm: number,
+  pairsImproved: boolean,
+): number {
+  if (!pairsImproved) {
+    return currentTargetWpm;
+  }
+  return Math.min(goalWpm, currentTargetWpm + FLUENCY_TARGET_RISE_WPM);
 }

@@ -68,7 +68,16 @@
     "streak": "Streak",
     "days": "days",
     "nextKeys": "Next keys",
-    "goal": "Goal"
+    "goal": "Goal",
+    "crossover": "Crossover gap",
+    "crossoverProjected": "Projected crossover in about {n} sessions",
+    "crossoverReached": "Blind speed has overtaken your day-one sighted speed",
+    "dipExplainer": "Retrain often feels slower before it feels faster. That dip is expected.",
+    "commitWeek": "Commit week",
+    "commitWeekOffer": "All letters unlocked at 25 WPM blind — start a 7-day eyes-up week?",
+    "commitWeekStart": "Start commit week",
+    "commitWeekCheckIn": "Check in for today",
+    "commitWeekProgress": "Commit week day {n} of 7"
   },
   "practice": {
     "handsReady": "Rest on F and J, then press both together",
@@ -89,16 +98,33 @@
   },
   "progress": {
     "title": "Progress",
-    "placeholder": "Key heatmap and history arrive in a later update."
+    "heatmap": "Key confidence",
+    "heatmapHint": "Numbers show confidence; colour is a secondary cue",
+    "history": "Session history",
+    "milestones": "Milestones",
+    "noSessions": "No sessions yet",
+    "noMilestones": "Milestones appear as you practise",
+    "crossover": "Crossover",
+    "eyesUpPoints": "Eyes-up points"
   },
   "library": {
     "title": "Library",
-    "orient": "Orient lesson"
+    "orient": "Orient lesson",
+    "ownText": "Own text",
+    "ownTextTitle": "Title",
+    "ownTextBody": "Paste text to practise (stays on this device)",
+    "ownTextSave": "Save text",
+    "ownTextPractise": "Practise",
+    "ownTextDelete": "Delete",
+    "ownTextEmpty": "No saved texts yet",
+    "timedTest": "Timed test",
+    "timedTestStart": "Start a one-minute test"
   },
   "settings": {
     "title": "Settings",
     "layout": "Layout",
     "track": "Track",
+    "trackKeepProgress": "Key progress is kept when the track changes",
     "goal": "Goal WPM",
     "textSize": "Text size",
     "theme": "Theme",
@@ -111,7 +137,19 @@
     "import": "Import progress",
     "delete": "Delete everything",
     "deleteConfirm": "Type DELETE then press Enter to confirm",
-    "saved": "Saved"
+    "saved": "Saved",
+    "switchPlaced": "Switch to placed track",
+    "fingerMap": "Finger map",
+    "fingerMapDefault": "Standard",
+    "fingerMapOneHandLeft": "One hand (left)",
+    "fingerMapOneHandRight": "One hand (right)",
+    "fingerMapReduced": "Fewer fingers",
+    "dyslexiaFont": "Dyslexia-friendly spacing"
+  },
+  "device": {
+    "title": "EyesUp needs a keyboard",
+    "body": "Open this link on a computer with a physical keyboard to practise.",
+    "copy": "Copy link"
   },
   "update": {
     "ready": "A new version is ready. It will load between sessions."

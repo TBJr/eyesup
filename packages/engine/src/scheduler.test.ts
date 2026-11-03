@@ -127,4 +127,40 @@ describe('scheduler (EU-015, EU-016, C1, C2)', () => {
     });
     expect(plan.lines.some((l) => l.kind === 'warmup')).toBe(true);
   });
+
+  it('plans fluency sessions with pair, metronome and rollover lines (EU-033)', () => {
+    const keys = layout.learnOrder.flat().map((code) => {
+      const k = createKeyStat(code);
+      return { ...k, accuracy: 0.99, timeToTypeMs: 200 };
+    });
+    const learner: Learner = {
+      layoutId: layout.id,
+      track: 'fluency',
+      targetWpm: 35,
+      goalWpm: 40,
+      unlockedGroupCount: layout.learnOrder.length,
+      keys,
+      pairs: [
+        { pair: 'th', accuracy: 0.7, timeToTypeMs: 600, recentIntervalsMs: [], count: 5 },
+        { pair: 'he', accuracy: 0.9, timeToTypeMs: 250, recentIntervalsMs: [], count: 5 },
+      ],
+      sessionCount: 2,
+      dailyMinutes: 12,
+    };
+    const plan = planSession({
+      learner,
+      layout,
+      letterModel,
+      wordList,
+      blocklist,
+      rng: createSeededRandom(11),
+      nowIso: '2026-01-01T12:00:00.000Z',
+    });
+    expect(plan.includesBlindCheck).toBe(true);
+    expect(plan.lines.some((l) => l.kind === 'pair_drill')).toBe(true);
+    expect(plan.lines.some((l) => l.kind === 'metronome')).toBe(true);
+    expect(plan.lines.some((l) => l.kind === 'rollover_drill')).toBe(true);
+    expect(plan.lines.filter((l) => l.kind === 'real_words').length).toBeGreaterThan(0);
+    expect(plan.lines.every((l) => l.text.length >= 40)).toBe(true);
+  });
 });

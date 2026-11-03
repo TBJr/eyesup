@@ -56,9 +56,13 @@ export function generateLine(input: GenerateLineInput): Line {
     kind = defaultKind(input.unlockedGroupCount, input.rng);
   }
   // Scheduler may request session block labels; map to generatable kinds.
-  if (kind === 'warmup' || kind === 'cool_down') {
+  if (kind === 'warmup' || kind === 'cool_down' || kind === 'rollover_drill') {
     kind = 'mixed_review';
-  } else if (kind === 'blind_check') {
+  } else if (
+    kind === 'blind_check' ||
+    kind === 'metronome' ||
+    kind === 'timed_test'
+  ) {
     kind = 'real_words';
   }
   if (input.unlockedGroupCount <= DRILL_ONLY_MAX_GROUP && isWordLineKind(kind)) {

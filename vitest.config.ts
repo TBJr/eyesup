@@ -10,7 +10,8 @@ export default defineConfig({
     testTimeout: 600_000,
     hookTimeout: 180_000,
     fileParallelism: false,
-    pool: 'forks',
+    // threads avoids intermittent hangs with forks + long property suites on some hosts
+    pool: 'threads',
     coverage: {
       provider: 'v8',
       include: ['packages/engine/src/**/*.ts'],

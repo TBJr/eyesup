@@ -1,5 +1,6 @@
 import {
   DEFAULT_GOAL_WPM,
+  FLUENCY_DEFAULT_GOAL_WPM,
   PLACEMENT_BLIND_ACCURACY_THRESHOLD,
   PLACEMENT_BLIND_TO_SIGHTED_RATIO,
   PLACEMENT_BLIND_WPM_THRESHOLD,
@@ -23,7 +24,7 @@ export interface PlacementInput {
 
 export interface PlacementResult {
   readonly placedTrack: Track;
-  /** Phase 1 active track (C7): Retrain→Foundations, Fluency→Adaptive. */
+  /** Active track equals placed track (C7 Phase 2: all tracks ship). */
   readonly activeTrack: Track;
   readonly reason: string;
   readonly targetWpm: number;
@@ -51,14 +52,9 @@ function withinTie(value: number, threshold: number): boolean {
   return Math.abs(value - threshold) / threshold <= PLACEMENT_TIE_BAND;
 }
 
-function activeForPhase1(placed: Track): Track {
-  if (placed === 'retrain') return 'foundations';
-  if (placed === 'fluency') return 'adaptive';
-  return placed;
-}
-
 /**
- * Placement rules from §03 with C6 tie band and C7/C8 Phase 1 mapping.
+ * Placement rules from §03 with C6 tie band.
+ * C7 Phase 1 remapping removed: activeTrack = placedTrack (all tracks live).
  */
 export function placeLearner(input: PlacementInput): PlacementResult {
   const { blindAccuracy, homeScore, sightedWpm, blindWpm, q2 } = input;
@@ -114,15 +110,17 @@ export function placeLearner(input: PlacementInput): PlacementResult {
     }
   }
 
-  const activeTrack = activeForPhase1(placed);
+  const activeTrack = placed;
   const targetWpm = startingTargetWpm(activeTrack, blindWpm);
+  const goalWpm =
+    placed === 'fluency' ? FLUENCY_DEFAULT_GOAL_WPM : DEFAULT_GOAL_WPM;
 
   return {
     placedTrack: placed,
     activeTrack,
     reason,
     targetWpm,
-    goalWpm: DEFAULT_GOAL_WPM,
+    goalWpm,
     tied,
   };
 }

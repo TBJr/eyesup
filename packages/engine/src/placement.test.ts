@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { placeLearner, type PlacementInput } from './placement.js';
+import { DEFAULT_GOAL_WPM, FLUENCY_DEFAULT_GOAL_WPM } from './params.js';
 
 function base(partial: Partial<PlacementInput>): PlacementInput {
   return {
@@ -12,19 +13,27 @@ function base(partial: Partial<PlacementInput>): PlacementInput {
   };
 }
 
-describe('placement (EU-010, C6–C8, D1.1)', () => {
-  const profiles: Array<{ name: string; input: PlacementInput; placed: string; active: string }> = [
+describe('placement (EU-010, C6–C8, D2.1 — all tracks)', () => {
+  const profiles: Array<{
+    name: string;
+    input: PlacementInput;
+    placed: string;
+    active: string;
+    goal: number;
+  }> = [
     {
       name: 'foundations clear',
       input: base({ sightedWpm: 20, blindAccuracy: 0.5, homeScore: 1, q2: 1 }),
       placed: 'foundations',
       active: 'foundations',
+      goal: DEFAULT_GOAL_WPM,
     },
     {
       name: 'retrain clear',
       input: base({ sightedWpm: 40, blindAccuracy: 0.5, homeScore: 1, q2: 2 }),
       placed: 'retrain',
-      active: 'foundations',
+      active: 'retrain',
+      goal: DEFAULT_GOAL_WPM,
     },
     {
       name: 'adaptive clear',
@@ -37,6 +46,7 @@ describe('placement (EU-010, C6–C8, D1.1)', () => {
       }),
       placed: 'adaptive',
       active: 'adaptive',
+      goal: DEFAULT_GOAL_WPM,
     },
     {
       name: 'fluency clear',
@@ -48,19 +58,22 @@ describe('placement (EU-010, C6–C8, D1.1)', () => {
         q2: 4,
       }),
       placed: 'fluency',
-      active: 'adaptive',
+      active: 'fluency',
+      goal: FLUENCY_DEFAULT_GOAL_WPM,
     },
     {
       name: 'sighted tie → foundations via q2',
       input: base({ sightedWpm: 30, blindAccuracy: 0.4, homeScore: 1, q2: 1 }),
       placed: 'foundations',
       active: 'foundations',
+      goal: DEFAULT_GOAL_WPM,
     },
     {
       name: 'sighted tie → retrain via q2',
       input: base({ sightedWpm: 30 * 1.02, blindAccuracy: 0.4, homeScore: 1, q2: 2 }),
       placed: 'retrain',
-      active: 'foundations',
+      active: 'retrain',
+      goal: DEFAULT_GOAL_WPM,
     },
     {
       name: 'home-row tie → adaptive via q2',
@@ -73,6 +86,7 @@ describe('placement (EU-010, C6–C8, D1.1)', () => {
       }),
       placed: 'adaptive',
       active: 'adaptive',
+      goal: DEFAULT_GOAL_WPM,
     },
     {
       name: 'home-row edge low → q2 foundations',
@@ -85,6 +99,7 @@ describe('placement (EU-010, C6–C8, D1.1)', () => {
       }),
       placed: 'foundations',
       active: 'foundations',
+      goal: DEFAULT_GOAL_WPM,
     },
     {
       name: 'fluency speed tie → q2 fluency',
@@ -96,7 +111,8 @@ describe('placement (EU-010, C6–C8, D1.1)', () => {
         q2: 4,
       }),
       placed: 'fluency',
-      active: 'adaptive',
+      active: 'fluency',
+      goal: FLUENCY_DEFAULT_GOAL_WPM,
     },
     {
       name: 'fluency ratio borderline → adaptive',
@@ -109,13 +125,14 @@ describe('placement (EU-010, C6–C8, D1.1)', () => {
       }),
       placed: 'adaptive',
       active: 'adaptive',
+      goal: DEFAULT_GOAL_WPM,
     },
   ];
 
-  it.each(profiles)('$name', ({ input, placed, active }) => {
+  it.each(profiles)('$name', ({ input, placed, active, goal }) => {
     const result = placeLearner(input);
     expect(result.placedTrack).toBe(placed);
     expect(result.activeTrack).toBe(active);
-    expect(result.goalWpm).toBe(30);
+    expect(result.goalWpm).toBe(goal);
   });
 });

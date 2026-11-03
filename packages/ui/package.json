@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./strings/en.json": "./strings/en.json",
+    "./strings/fr.json": "./strings/fr.json",
     "./domKeyBridge": "./src/domKeyBridge.ts"
   },
   "scripts": {

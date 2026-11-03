@@ -11,6 +11,7 @@ import { generateLine, type GenerateLineInput, type LetterModel } from './genera
 import {
   isDueForReview,
   selectFocusKey,
+  slowestPairs,
   tryUnlockNextGroup,
 } from './mastery.js';
 import type { SeededRandom } from './random.js';
@@ -70,51 +71,102 @@ function focusCharFromStat(layout: Layout, focus: KeyStat): string {
   return ch;
 }
 
+function generationKind(kind: LineKind): LineKind {
+  if (kind === 'warmup' || kind === 'cool_down' || kind === 'rollover_drill') {
+    return 'mixed_review';
+  }
+  if (kind === 'blind_check' || kind === 'metronome' || kind === 'timed_test') {
+    return 'real_words';
+  }
+  return kind;
+}
+
 function generateOfKind(
   base: Omit<GenerateLineInput, 'kind' | 'focusChar'>,
   kind: LineKind,
   focusChar: string,
 ): Line {
-  const genKind: LineKind =
-    kind === 'warmup' || kind === 'cool_down'
-      ? 'mixed_review'
-      : kind === 'blind_check'
-        ? 'real_words'
-        : kind;
-  const line = generateLine({ ...base, kind: genKind, focusChar });
+  const line = generateLine({
+    ...base,
+    kind: generationKind(kind),
+    focusChar,
+  });
   return { ...line, kind };
 }
 
+function pairFocusChar(learner: Learner, fallback: string): string {
+  const slow = slowestPairs(learner.pairs, learner.targetWpm);
+  if (slow.length === 0) {
+    return fallback;
+  }
+  for (const ch of slow[0]!.pair) {
+    const lower = ch.toLowerCase();
+    if (lower !== ' ') {
+      return lower;
+    }
+  }
+  return fallback;
+}
+
 /**
- * Plan one practice session (§04 scheduler, C1, C2, EU-015, EU-016).
+ * Plan one practice session (§04 scheduler, C1, C2, EU-015, EU-016, FR-19, FR-20).
+ *
+ * Track notes:
+ * - fluency: all groups unlocked for generation; half of new-keys → pair_drill;
+ *   more real_words; mixed_review yields some pair_drill + one metronome + one rollover_drill.
+ * - retrain: caller sets learner.unlockedGroupCount to the physical count
+ *   (via effectiveUnlockGroupCount / retrainPhysicalGroups).
+ * - adaptive/fluency: pair_drill when learner.pairs is non-empty.
  */
 export function planSession(input: PlanSessionInput): PlanSessionResult {
   let learner = tryUnlockNextGroup(input.learner);
   const minutes = input.minutes ?? learner.dailyMinutes;
   const n = Math.max(1, Math.round(minutes * SESSION_LINES_PER_MINUTE));
+  const track = learner.track as Track;
 
   const focusStat = selectFocusKey(learner.keys, learner.targetWpm);
   const focusChar = focusCharFromStat(input.layout, focusStat);
+  const usePairs =
+    learner.pairs.length > 0 && (track === 'fluency' || track === 'adaptive');
+  const pairFocus = usePairs ? pairFocusChar(learner, focusChar) : focusChar;
 
   const due = learner.keys.filter((k) =>
     isDueForReview(k, learner.targetWpm, input.nowIso),
   );
 
   const warm = shareCount(n, BLOCK_WARMUP_SHARE);
-  const neu = shareCount(n, BLOCK_NEW_KEYS_SHARE);
-  const mixed = shareCount(n, BLOCK_MIXED_REVIEW_SHARE);
-  const words = shareCount(n, BLOCK_WORDS_TEXT_SHARE);
+  let neu = shareCount(n, BLOCK_NEW_KEYS_SHARE);
+  let mixed = shareCount(n, BLOCK_MIXED_REVIEW_SHARE);
+  let words = shareCount(n, BLOCK_WORDS_TEXT_SHARE);
   let tail = shareCount(n, BLOCK_BLIND_OR_COOLDOWN_SHARE);
-  // Fix rounding so totals match n
+
+  // Fluency: shift a word-line from mixed into words for more real_words practice.
+  if (track === 'fluency' && mixed > 0) {
+    mixed -= 1;
+    words += 1;
+  }
+
   const assigned = warm + neu + mixed + words + tail;
   if (assigned < n) {
     tail += n - assigned;
+  } else if (assigned > n) {
+    const overflow = assigned - n;
+    if (tail >= overflow) {
+      tail -= overflow;
+    } else if (mixed >= overflow) {
+      mixed -= overflow;
+    } else {
+      neu = Math.max(0, neu - overflow);
+    }
   }
+
+  const unlockedGroupCount =
+    track === 'fluency' ? input.layout.learnOrder.length : learner.unlockedGroupCount;
 
   const genBase = {
     layout: input.layout,
-    unlockedGroupCount: learner.unlockedGroupCount,
-    track: learner.track as Track,
+    unlockedGroupCount,
+    track,
     letterModel: input.letterModel,
     wordList: input.wordList,
     blocklist: input.blocklist,
@@ -130,14 +182,44 @@ export function planSession(input: PlanSessionInput): PlanSessionResult {
         : focusChar;
     lines.push(generateOfKind(genBase, 'warmup', dueFocus));
   }
-  for (let i = 0; i < neu; i += 1) {
+
+  // Fluency / adaptive with pairs: replace half of new-keys with pair_drill.
+  const pairFromNew =
+    track === 'fluency' || (track === 'adaptive' && usePairs)
+      ? Math.floor(neu / 2)
+      : 0;
+  const keyDrillCount = neu - pairFromNew;
+  for (let i = 0; i < keyDrillCount; i += 1) {
     lines.push(generateOfKind(genBase, 'key_drill', focusChar));
   }
-  for (let i = 0; i < mixed; i += 1) {
-    lines.push(generateOfKind(genBase, 'mixed_review', focusChar));
+  for (let i = 0; i < pairFromNew; i += 1) {
+    lines.push(generateOfKind(genBase, 'pair_drill', pairFocus));
   }
+
+  // Fluency: one metronome + one rollover_drill from the mixed block; rest may be pair_drill.
+  let mixedLeft = mixed;
+  if (track === 'fluency' && mixedLeft > 0) {
+    lines.push(generateOfKind(genBase, 'metronome', focusChar));
+    mixedLeft -= 1;
+  }
+  if (track === 'fluency' && mixedLeft > 0) {
+    lines.push(generateOfKind(genBase, 'rollover_drill', focusChar));
+    mixedLeft -= 1;
+  }
+  for (let i = 0; i < mixedLeft; i += 1) {
+    const kind: LineKind =
+      usePairs && (track === 'fluency' || track === 'adaptive') && i % 2 === 0
+        ? 'pair_drill'
+        : 'mixed_review';
+    lines.push(
+      generateOfKind(genBase, kind, kind === 'pair_drill' ? pairFocus : focusChar),
+    );
+  }
+
   for (let i = 0; i < words; i += 1) {
-    const kind: LineKind = i % 2 === 0 ? 'real_words' : 'pseudo_words';
+    // Fluency prefers real_words; others alternate with pseudo_words.
+    const kind: LineKind =
+      track === 'fluency' || i % 2 === 0 ? 'real_words' : 'pseudo_words';
     lines.push(generateOfKind(genBase, kind, focusChar));
   }
 

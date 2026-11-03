@@ -6,6 +6,13 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ### Added
 
+- Public landing page (`site-public/`) and Pages assemble step; phone hand-off route `#/device` (EU-041 / D2.2).
+- Progress heatmap, session history, milestones and crossover summary; Library own-text practise; Settings track/goal/sound (EU-037, EU-039, EU-051).
+- Beta checklist, synthetic Gate B fixtures, and Gate C supporting metrics in `pnpm beta-report`.
+- French practice pack (words, phrases, blocklist, letter model) and UI strings; the web app selects them for AZERTY / `language: fr` (EU-036).
+- Desktop Tauri 2 scaffold under `apps/desktop` with SQLite schema and `import_json` command (EU-042 start); `scripts/version-set.mjs`.
+- Engine support for Retrain and Fluency: crossover projection, Commit Week gates, eyes-up points, merged Retrain unlocks, and Fluency session planning (EU-031–EU-033).
+- Axe WCAG smoke e2e on the welcome screen (Gate C / NFR-06 prep).
 - Web MVP: onboarding, Orient, placement, Today, practice session player, Settings, Keyboard, typing surface, IndexedDB storage, offline service worker (Phase 1 / D1.1–D1.3).
 - Input adapter (engine + DOM bridge) with Playwright keyboard coverage (EU-012).
 - Engine mastery fade levels, pair confidence, session scheduler, spaced review and placement (EU-013–EU-016, EU-010).

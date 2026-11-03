@@ -3,6 +3,7 @@
 -- stores the same records in IndexedDB object stores with the same names.
 -- Everything here stays on the device. Typed text is never stored except in
 -- own_text, which the learner pastes themselves.
+-- Never shipped: safe to edit in place until the first desktop release.
 
 PRAGMA foreign_keys = ON;
 
@@ -13,18 +14,26 @@ CREATE TABLE schema_version (
 
 -- One learner per device until accounts exist (Phase 4).
 CREATE TABLE profile (
-  id               INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
-  layout_id        TEXT    NOT NULL,                      -- e.g. 'qwerty-us'
-  track            TEXT    NOT NULL CHECK (track IN ('foundations', 'retrain', 'adaptive', 'fluency')),
-  overlays         TEXT    NOT NULL DEFAULT '[]',         -- JSON array: 'coder', 'numbers'
-  access_profile   TEXT    NOT NULL DEFAULT '{}',         -- JSON: textSize, contrast, reducedMotion, fingerMap, font, sound, theme
-  daily_minutes    INTEGER NOT NULL DEFAULT 12 CHECK (daily_minutes IN (5, 12, 20)),
-  target_wpm       REAL    NOT NULL,                      -- current unlock target, rises as groups unlock
-  goal_wpm         REAL    NOT NULL DEFAULT 30,
-  keyboard_shape   TEXT    NOT NULL DEFAULT 'laptop' CHECK (keyboard_shape IN ('laptop', 'full', 'split')),
-  reminder_time    TEXT,                                  -- 'HH:MM' local time, NULL = off
-  created_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  updated_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  id                       INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+  layout_id                TEXT    NOT NULL,                      -- e.g. 'qwerty-us'
+  track                    TEXT    NOT NULL CHECK (track IN ('foundations', 'retrain', 'adaptive', 'fluency')),
+  overlays                 TEXT    NOT NULL DEFAULT '[]',         -- JSON array: 'coder', 'numbers'
+  access_profile           TEXT    NOT NULL DEFAULT '{}',         -- JSON: textSize, contrast, reducedMotion, fingerMap, font, sound, theme
+  daily_minutes            INTEGER NOT NULL DEFAULT 12 CHECK (daily_minutes IN (5, 12, 20)),
+  target_wpm               REAL    NOT NULL,                      -- current unlock target, rises as groups unlock
+  goal_wpm                 REAL    NOT NULL DEFAULT 30,
+  keyboard_shape           TEXT    NOT NULL DEFAULT 'laptop' CHECK (keyboard_shape IN ('laptop', 'full', 'split')),
+  reminder_time            TEXT,                                  -- 'HH:MM' local time, NULL = off
+  streak_days              INTEGER NOT NULL DEFAULT 0,
+  last_practice_date       TEXT,
+  rest_days_used_this_week INTEGER NOT NULL DEFAULT 0,
+  week_start_iso           TEXT,
+  placed_track             TEXT CHECK (placed_track IS NULL OR placed_track IN ('foundations', 'retrain', 'adaptive', 'fluency')),
+  commit_week_started_at   TEXT,
+  commit_week_check_ins    INTEGER NOT NULL DEFAULT 0,
+  eyes_up_points           INTEGER NOT NULL DEFAULT 0,
+  created_at               TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at               TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
 -- Onboarding answers and both probes. Written once; never edited.
@@ -45,16 +54,19 @@ CREATE TABLE baseline (
 
 -- One row per key per layout. Learning AZERTY never overwrites QWERTY.
 CREATE TABLE key_stat (
-  layout_id        TEXT    NOT NULL,
-  code             TEXT    NOT NULL,                      -- KeyboardEvent.code, e.g. 'KeyF'
-  unlocked_at      TEXT,                                  -- NULL = still locked
-  guide_level      INTEGER NOT NULL DEFAULT 0 CHECK (guide_level BETWEEN 0 AND 3),  -- L0..L3
-  accuracy         REAL    NOT NULL DEFAULT 0,            -- exponentially weighted, half-life 40 presses
-  time_to_type_ms  REAL,                                  -- smoothed median
-  confidence       REAL    NOT NULL DEFAULT 0 CHECK (confidence BETWEEN 0 AND 1),
-  presses          INTEGER NOT NULL DEFAULT 0,
-  stable_sessions  INTEGER NOT NULL DEFAULT 0,
-  last_practised   TEXT,
+  layout_id               TEXT    NOT NULL,
+  code                    TEXT    NOT NULL,                      -- KeyboardEvent.code, e.g. 'KeyF'
+  unlocked_at             TEXT,                                  -- NULL = still locked
+  guide_level             INTEGER NOT NULL DEFAULT 0 CHECK (guide_level BETWEEN 0 AND 3),  -- L0..L3
+  accuracy                REAL    NOT NULL DEFAULT 0,            -- exponentially weighted, half-life 40 presses
+  time_to_type_ms         REAL,                                  -- smoothed median
+  confidence              REAL    NOT NULL DEFAULT 0 CHECK (confidence BETWEEN 0 AND 1),
+  presses                 INTEGER NOT NULL DEFAULT 0,
+  stable_sessions         INTEGER NOT NULL DEFAULT 0,
+  sessions_with_key       INTEGER NOT NULL DEFAULT 0,
+  recent_intervals_ms     TEXT    NOT NULL DEFAULT '[]',         -- JSON number array
+  recent_first_attempts   TEXT    NOT NULL DEFAULT '[]',         -- JSON number array (0/1)
+  last_practised          TEXT,
   PRIMARY KEY (layout_id, code)
 );
 

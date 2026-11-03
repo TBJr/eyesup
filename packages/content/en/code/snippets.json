@@ -1,0 +1,10 @@
+{
+  "languages": ["js", "ts", "py", "rs"],
+  "snippets": [
+    { "id": "js-arrow", "language": "js", "title": "Arrow function", "body": "const add = (a, b) => a + b;" },
+    { "id": "js-brackets", "language": "js", "title": "Object", "body": "const point = { x: 1, y: 2 };" },
+    { "id": "ts-type", "language": "ts", "title": "Type alias", "body": "type Pair = [string, number];" },
+    { "id": "py-def", "language": "py", "title": "Function", "body": "def greet(name: str) -> str:\n    return f\"hi {name}\"" },
+    { "id": "rs-match", "language": "rs", "title": "Match", "body": "match n { 0 => \"zero\", _ => \"other\" }" }
+  ]
+}

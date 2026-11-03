@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EyesUp — learn to type without looking</title>
+    <meta
+      name="description"
+      content="EyesUp teaches touch typing with a guide that fades key by key. Private by design: everything you type stays on your device."
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --ink: #1a1d23;
+        --muted: #5b616b;
+        --bg: #f7f5f0;
+        --card: #ffffff;
+        --accent: #2f6fed;
+        --border: #dad6cd;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #f2f0ea;
+          --muted: #a8adb6;
+          --bg: #12141a;
+          --card: #1c1f27;
+          --border: #2e3340;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.5;
+      }
+      main {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+      }
+      h1 {
+        font-size: clamp(1.75rem, 5vw, 2.25rem);
+        line-height: 1.2;
+        margin: 0 0 0.75rem;
+      }
+      p {
+        margin: 0 0 1rem;
+        color: var(--muted);
+      }
+      .lead {
+        color: var(--ink);
+        font-size: 1.125rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+      }
+      ul {
+        margin: 0;
+        padding-left: 1.25rem;
+        color: var(--muted);
+      }
+      a.button {
+        display: inline-block;
+        margin: 0.35rem 0.5rem 0.35rem 0;
+        padding: 0.75rem 1.1rem;
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+      }
+      a.secondary {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+      footer {
+        margin-top: 2.5rem;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+      footer a {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>EyesUp</h1>
+      <p class="lead">
+        Learn to type with your eyes on the screen. A short diagnostic places you on a track, then an
+        on-screen keyboard fades key by key as your fingers learn.
+      </p>
+      <div class="card">
+        <p class="lead">Private by design</p>
+        <ul>
+          <li>No account and no cloud sync of what you type</li>
+          <li>Progress stays on your device; you can export or delete it anytime</li>
+          <li>Works offline after the first visit</li>
+        </ul>
+      </div>
+      <p>
+        <a class="button" href="./app/">Open the web app</a>
+        <a class="button secondary" href="./keyboard-test/">Keyboard test page</a>
+      </p>
+      <p>
+        Desktop installers for Windows, macOS and Linux ship in a later release. Until then, use the
+        web app on a computer with a physical keyboard.
+      </p>
+      <footer>
+        <a href="https://github.com/TBJr/eyesup">Source</a>
+        ·
+        <a href="https://github.com/TBJr/eyesup/blob/main/PRIVACY.md">Privacy</a>
+        ·
+        <a href="https://github.com/TBJr/eyesup/blob/main/SECURITY.md">Security</a>
+      </footer>
+    </main>
+  </body>
+</html>

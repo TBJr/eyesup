@@ -122,3 +122,40 @@ export const REVIEW_CONFIDENCE_THRESHOLD = 0.9;
 
 /** C9 — default learner goal WPM. */
 export const DEFAULT_GOAL_WPM = 30;
+
+/** C10 / FR-19 — eyes-up points per guide level (peeked strokes always score L0). */
+export const EYES_UP_POINTS_L0 = 1;
+export const EYES_UP_POINTS_L1 = 2;
+export const EYES_UP_POINTS_L2 = 3;
+export const EYES_UP_POINTS_L3 = 4;
+
+/** FR-19 / EU-032 — blind WPM needed to start Commit Week. */
+export const COMMIT_WEEK_BLIND_WPM = 25;
+
+/** FR-19 / EU-032 — daily check-ins required to finish Commit Week. */
+export const COMMIT_WEEK_DAYS = 7;
+
+/** §02 crossover plan / EU-031 — sessions used for blind-speed projection. */
+export const CROSSOVER_PROJECTION_SESSIONS = 10;
+
+/**
+ * FR-19 / EU-031 — Retrain merge size after the first full groups (PO default).
+ * After RETRAIN_FULL_GROUPS_BEFORE_MERGE learn-order groups, each unlock advances
+ * by this many physical groups (merge groups 5–15 into bigger steps).
+ */
+export const RETRAIN_GROUP_MERGE_SIZE = 2;
+
+/** FR-19 / EU-031 — Retrain unlocks the first N learn-order groups one-by-one (PO default). */
+export const RETRAIN_FULL_GROUPS_BEFORE_MERGE = 4;
+
+/**
+ * C9 / FR-20 / EU-033 — Fluency default goal WPM (PO default; C9 left this open).
+ */
+export const FLUENCY_DEFAULT_GOAL_WPM = 40;
+
+/**
+ * FR-20 / EU-033 — Fluency target rise after a session where mean time of the
+ * slowest SLOWEST_PAIR_DRILL_COUNT pairs improved vs the previous session
+ * snapshot (caller may pass an improvement boolean if that is easier) (PO default).
+ */
+export const FLUENCY_TARGET_RISE_WPM = 1;

@@ -1,0 +1,160 @@
+{
+  "app": {
+    "name": "EyesUp",
+    "tagline": "Apprenez a taper sans regarder le clavier."
+  },
+  "nav": {
+    "today": "Aujourd'hui",
+    "practice": "Pratique",
+    "progress": "Progres",
+    "library": "Bibliotheque",
+    "settings": "Reglages",
+    "label": "Principal"
+  },
+  "welcome": {
+    "title": "EyesUp",
+    "body": "Apprenez a taper les yeux sur l'ecran. Aucun compte requis.",
+    "start": "Appuyez sur Entree pour commencer"
+  },
+  "orient": {
+    "title": "Orient",
+    "posture": "Asseyez-vous droit, poignets souples, ecran a hauteur des yeux.",
+    "home": "Posez les index sur les bosses de F et J.",
+    "zones": "Chaque doigt reste dans sa zone de couleur.",
+    "eFinger": "E se tape avec le majeur gauche.",
+    "rFinger": "R se tape avec l'index gauche.",
+    "oFinger": "O se tape avec l'annulaire droit.",
+    "done": "Appuyez sur Entree quand vous etes pret",
+    "next": "Appuyez sur Entree pour l'etape suivante",
+    "replay": "Revoir Orient"
+  },
+  "questions": {
+    "continue": "Appuyez sur Entree pour continuer",
+    "toggle": "Les chiffres basculent ; Entree continue"
+  },
+  "probeA": {
+    "title": "Tapez normalement pendant 45 secondes",
+    "hint": "Regardez l'ecran. Tapez comme d'habitude.",
+    "passage": "le renard brun agile saute par dessus le chien paresseux et continue avec des mains stables sur la rangee de base aujourd hui"
+  },
+  "probeB": {
+    "title": "Position de base et controle a l'aveugle",
+    "home": "Appuyez sur la touche du doigt surligne.",
+    "blind": "Clavier cache — tapez au feeling.",
+    "homeLabel": "Controle de base",
+    "passage": "ligne de frappe a l aveugle avec des mots courants pour le test"
+  },
+  "layouts": {
+    "qwertyUs": "qwerty-us",
+    "qwertyUk": "qwerty-uk",
+    "azertyFr": "azerty-fr"
+  },
+  "controls": {
+    "smaller": "Texte plus petit",
+    "larger": "Texte plus grand"
+  },
+  "result": {
+    "title": "Votre parcours de depart",
+    "reason": "Pourquoi ce parcours",
+    "layout": "Disposition du clavier",
+    "changeLayout": "Changer de disposition",
+    "override": "Choisir un autre parcours",
+    "continue": "Appuyez sur Entree pour continuer"
+  },
+  "today": {
+    "title": "Aujourd'hui",
+    "start": "Appuyez sur Entree pour la session du jour",
+    "streak": "Serie",
+    "days": "jours",
+    "nextKeys": "Prochaines touches",
+    "goal": "Objectif",
+    "crossover": "Ecart de croisement",
+    "crossoverProjected": "Croisement estime dans environ {n} sessions",
+    "crossoverReached": "La vitesse a l'aveugle a depasse votre vitesse du premier jour",
+    "dipExplainer": "Le parcours Retrain est souvent plus lent avant d'etre plus rapide. Ce creux est normal.",
+    "commitWeek": "Semaine d'engagement",
+    "commitWeekOffer": "Toutes les lettres a 25 MPM a l'aveugle — commencer 7 jours yeux leves ?",
+    "commitWeekStart": "Demarrer la semaine",
+    "commitWeekCheckIn": "Pointer pour aujourd'hui",
+    "commitWeekProgress": "Semaine d'engagement jour {n} sur 7"
+  },
+  "practice": {
+    "handsReady": "Posez sur F et J, puis appuyez les deux ensemble",
+    "paused": "En pause — Echap pour reprendre",
+    "peek": "Coup d'oeil",
+    "capsLock": "Verr Maj active",
+    "ime": "Terminez la composition avant de continuer",
+    "lineResult": "Resultat de la ligne",
+    "summary": "Resume de session",
+    "unlock": "Nouvelles touches",
+    "unlockStart": "Appuyez sur Entree pour pratiquer",
+    "break": "Temps pour une courte pause",
+    "breakSkip": "Appuyez sur Entree pour passer",
+    "done": "Termine — retour a Aujourd'hui",
+    "wpm": "MPM",
+    "accuracy": "Precision",
+    "slowest": "Touche la plus lente"
+  },
+  "progress": {
+    "title": "Progres",
+    "heatmap": "Confiance par touche",
+    "heatmapHint": "Les chiffres montrent la confiance ; la couleur est un indice secondaire",
+    "history": "Historique des sessions",
+    "milestones": "Jalons",
+    "noSessions": "Pas encore de session",
+    "noMilestones": "Les jalons apparaissent avec la pratique",
+    "crossover": "Croisement",
+    "eyesUpPoints": "Points yeux leves"
+  },
+  "library": {
+    "title": "Bibliotheque",
+    "orient": "Lecon Orient",
+    "ownText": "Texte personnel",
+    "ownTextTitle": "Titre",
+    "ownTextBody": "Collez un texte a pratiquer (reste sur cet appareil)",
+    "ownTextSave": "Enregistrer",
+    "ownTextPractise": "Pratiquer",
+    "ownTextDelete": "Supprimer",
+    "ownTextEmpty": "Aucun texte enregistre",
+    "timedTest": "Test chronometre",
+    "timedTestStart": "Demarrer un test d'une minute"
+  },
+  "settings": {
+    "title": "Reglages",
+    "layout": "Disposition",
+    "track": "Parcours",
+    "trackKeepProgress": "La progression des touches est gardee si le parcours change",
+    "goal": "Objectif MPM",
+    "textSize": "Taille du texte",
+    "theme": "Theme",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "themeHighContrast": "Contraste eleve",
+    "reducedMotion": "Mouvement reduit",
+    "sound": "Son",
+    "export": "Exporter la progression (JSON)",
+    "import": "Importer la progression",
+    "delete": "Tout supprimer",
+    "deleteConfirm": "Tapez DELETE puis Entree pour confirmer",
+    "saved": "Enregistre",
+    "switchPlaced": "Passer au parcours place",
+    "fingerMap": "Carte des doigts",
+    "fingerMapDefault": "Standard",
+    "fingerMapOneHandLeft": "Une main (gauche)",
+    "fingerMapOneHandRight": "Une main (droite)",
+    "fingerMapReduced": "Moins de doigts",
+    "dyslexiaFont": "Espacement pour la dyslexie"
+  },
+  "device": {
+    "title": "EyesUp a besoin d'un clavier",
+    "body": "Ouvrez ce lien sur un ordinateur avec un clavier physique pour pratiquer.",
+    "copy": "Copier le lien"
+  },
+  "update": {
+    "ready": "Une nouvelle version est prete. Elle se chargera entre les sessions."
+  },
+  "a11y": {
+    "keyboard": "Clavier a l'ecran",
+    "typingSurface": "Texte d'exercice"
+  }
+}

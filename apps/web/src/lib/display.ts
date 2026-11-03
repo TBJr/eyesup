@@ -15,6 +15,20 @@ export function applyDisplaySettings(access: AccessProfile): void {
   } else {
     root.removeAttribute('data-reduced-motion');
   }
+  if (access.font === 'dyslexia') {
+    root.setAttribute('data-font', 'dyslexia');
+    root.style.setProperty('--practice-letter-spacing', '0.08em');
+    root.style.setProperty('--practice-word-spacing', '0.16em');
+  } else {
+    root.removeAttribute('data-font');
+    root.style.removeProperty('--practice-letter-spacing');
+    root.style.removeProperty('--practice-word-spacing');
+  }
+  if (access.fingerMap) {
+    root.setAttribute('data-finger-map', access.fingerMap);
+  } else {
+    root.removeAttribute('data-finger-map');
+  }
 }
 
 export const DEFAULT_ACCESS: AccessProfile = {

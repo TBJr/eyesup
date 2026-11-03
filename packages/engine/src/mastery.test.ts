@@ -4,15 +4,19 @@ import {
   confidence,
   createKeyStat,
   createPairStat,
+  effectiveUnlockGroupCount,
   endSessionFadeUpdate,
+  fluencyTargetAfterSession,
   isDueForReview,
   keyConfidence,
   pairConfidence,
   recordKeyInterval,
   recordKeyPress,
   recordPairPress,
+  retrainPhysicalGroups,
   reviewIntervalDays,
   selectFocusKey,
+  slowestPairs,
   startingTargetWpm,
   targetMsPerChar,
   targetWpmAfterUnlocks,
@@ -21,7 +25,12 @@ import {
   windowAccuracy,
 } from './mastery.js';
 import type { Learner } from './types.js';
-import { FADE_PRESS_WINDOW } from './params.js';
+import {
+  FADE_PRESS_WINDOW,
+  FLUENCY_TARGET_RISE_WPM,
+  RETRAIN_FULL_GROUPS_BEFORE_MERGE,
+  RETRAIN_GROUP_MERGE_SIZE,
+} from './params.js';
 
 describe('mastery helpers', () => {
   it('rejects non-positive target WPM', () => {
@@ -227,6 +236,34 @@ describe('mastery helpers', () => {
     const next = tryUnlockNextGroup(learner);
     expect(next.unlockedGroupCount).toBe(2);
     expect(next.targetWpm).toBe(17);
+  });
+
+  it('maps Retrain logical unlocks to merged physical groups (EU-031)', () => {
+    expect(retrainPhysicalGroups(1, 15)).toBe(1);
+    expect(retrainPhysicalGroups(RETRAIN_FULL_GROUPS_BEFORE_MERGE, 15)).toBe(4);
+    expect(retrainPhysicalGroups(5, 15)).toBe(
+      RETRAIN_FULL_GROUPS_BEFORE_MERGE + RETRAIN_GROUP_MERGE_SIZE,
+    );
+    expect(retrainPhysicalGroups(6, 15)).toBe(8);
+    expect(retrainPhysicalGroups(20, 15)).toBe(15);
+    expect(effectiveUnlockGroupCount(15, 5, 'retrain')).toBe(6);
+    expect(effectiveUnlockGroupCount(15, 5, 'foundations')).toBe(5);
+  });
+
+  it('sorts slowest pairs by ascending confidence', () => {
+    const slow = createPairStat('ab');
+    slow.accuracy = 0.5;
+    slow.timeToTypeMs = 900;
+    const fast = createPairStat('th');
+    fast.accuracy = 0.99;
+    fast.timeToTypeMs = 150;
+    expect(slowestPairs([fast, slow], 30, 1).map((p) => p.pair)).toEqual(['ab']);
+  });
+
+  it('raises fluency target only when pairs improved', () => {
+    expect(fluencyTargetAfterSession(35, 40, false)).toBe(35);
+    expect(fluencyTargetAfterSession(35, 40, true)).toBe(35 + FLUENCY_TARGET_RISE_WPM);
+    expect(fluencyTargetAfterSession(40, 40, true)).toBe(40);
   });
 });
 

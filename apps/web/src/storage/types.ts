@@ -28,6 +28,11 @@ export interface ProfileRecord {
   lastPracticeDate: string | null;
   restDaysUsedThisWeek: number;
   weekStartIso: string | null;
+  /** Optional placement override / last placed track (EU-039 prep). */
+  placedTrack?: Track;
+  commitWeekStartedAt?: string | null;
+  commitWeekCheckIns?: number;
+  eyesUpPoints?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -151,6 +156,10 @@ export interface StorageAdapter {
   listLineResults(sessionId: number): Promise<LineResultRecord[]>;
   putMilestone(m: MilestoneRecord): Promise<void>;
   listMilestones(): Promise<MilestoneRecord[]>;
+  listOwnTexts(): Promise<OwnTextRecord[]>;
+  /** Create or update; omit `id` to auto-assign. */
+  putOwnText(text: Omit<OwnTextRecord, 'id'> & { id?: number }): Promise<OwnTextRecord>;
+  deleteOwnText(id: number): Promise<void>;
   exportJson(): Promise<EyesUpExport>;
   importJson(data: EyesUpExport): Promise<void>;
   deleteEverything(): Promise<void>;

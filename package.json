@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "pnpm --filter @eyesup/web dev",
     "build": "pnpm tokens && pnpm -r --filter @eyesup/web build",
+    "build:desktop": "pnpm tokens && pnpm --filter @eyesup/web build && pnpm --filter @eyesup/desktop build",
+    "desktop:dev": "pnpm --filter @eyesup/desktop dev",
     "typecheck": "pnpm -r typecheck",
     "lint": "node scripts/check-strings.mjs && pnpm -r --if-present lint",
     "pretest": "node scripts/patch-vitest-rpc-timeout.mjs",
@@ -17,9 +19,11 @@
     "size": "node scripts/size-check.mjs",
     "tokens": "node scripts/build-tokens.mjs",
     "validate-layouts": "node scripts/validate-layouts.mjs packages/layouts",
-    "beta-report": "node scripts/beta-report.mjs"
+    "beta-report": "node scripts/beta-report.mjs",
+    "version:set": "node scripts/version-set.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.64.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@vitest/coverage-v8": "^3.0.8",

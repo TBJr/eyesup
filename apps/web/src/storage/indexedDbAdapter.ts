@@ -223,6 +223,39 @@ export function createIndexedDbAdapter(): StorageAdapter {
       ) as Promise<MilestoneRecord[]>;
     },
 
+    async listOwnTexts() {
+      const database = await db();
+      return reqToPromise(
+        database.transaction('own_text').objectStore('own_text').getAll(),
+      ) as Promise<OwnTextRecord[]>;
+    },
+
+    async putOwnText(text) {
+      const database = await db();
+      const tx = database.transaction('own_text', 'readwrite');
+      const store = tx.objectStore('own_text');
+      const record = {
+        ...text,
+        schemaVersion: STORAGE_SCHEMA_VERSION,
+      };
+      let id: number;
+      if (text.id !== undefined) {
+        await reqToPromise(store.put(record));
+        id = text.id;
+      } else {
+        id = (await reqToPromise(store.add(record))) as number;
+      }
+      await txDone(tx);
+      return { ...record, id };
+    },
+
+    async deleteOwnText(id) {
+      const database = await db();
+      const tx = database.transaction('own_text', 'readwrite');
+      tx.objectStore('own_text').delete(id);
+      await txDone(tx);
+    },
+
     async exportJson() {
       const database = await db();
       const read = <T>(store: string) =>
@@ -264,6 +297,12 @@ export function createIndexedDbAdapter(): StorageAdapter {
         await txDone(tx);
       }
       for (const m of data.milestones) await this.putMilestone(m);
+      for (const o of data.ownTexts ?? []) {
+        const database = await db();
+        const tx = database.transaction('own_text', 'readwrite');
+        tx.objectStore('own_text').put(o);
+        await txDone(tx);
+      }
     },
 
     async deleteEverything() {

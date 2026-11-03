@@ -4,7 +4,7 @@ Learn to type without looking at the keyboard.
 
 EyesUp starts with a 3-minute check of how you type today, places you on one of four tracks, and teaches with an on-screen keyboard that fades key by key as your fingers learn. It runs in the browser and as a desktop app on Windows, macOS and Linux, from one codebase. Everything you type stays on your device.
 
-> **Status:** Phase 0 (discover and design). The code described below is the planned structure; packages are scaffolded as each phase starts.
+> **Status:** Phase 2 in progress on `phase-2` (web v1: Retrain/Fluency, French, Progress, Library, public site). Phase 0 and Phase 1 MVP code are on `main`. Private beta / Gate B still needs a product-owner cohort; see [docs/beta-checklist.md](docs/beta-checklist.md). Desktop (Phase 3) Tauri shell is scaffolded under `apps/desktop`.
 
 ## Principles
 
@@ -42,9 +42,19 @@ pnpm install
 pnpm dev                       # web app at http://localhost:5173
 pnpm test                      # engine unit tests
 pnpm test:e2e                  # Playwright in Chromium, Firefox and WebKit
-pnpm --filter desktop tauri dev   # desktop app in a native window
+pnpm desktop:dev                  # desktop app in a native window (needs Rust)
+pnpm beta-report fixtures/beta-exports  # Gate B / Gate C support metrics
 node scripts/validate-layouts.mjs # check every layout file
 ```
+
+## Beta and gates
+
+| Gate | Meaning | How |
+| --- | --- | --- |
+| A | Prototype / Orient understood | Passed (Phase 0) |
+| B | Half of beta types home row blind at 95% within ~2 weeks | [docs/beta-checklist.md](docs/beta-checklist.md) + `pnpm beta-report` |
+| C | Day-30 return and eyes-up rate vs plan targets | Same exports; report prints supporting shares |
+| D | Keyboard matrix on all desktop OSes | [docs/keyboard-test-matrix.md](docs/keyboard-test-matrix.md) |
 
 ## Documentation
 
