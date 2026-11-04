@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('learning shell works offline after first load (NFR-05)', async ({ page, context }) => {
   await page.goto('/#/welcome');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 10_000 });
 
   await page.evaluate(async () => {
     const cache = await caches.open('eyesup-v1');

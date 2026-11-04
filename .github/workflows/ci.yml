@@ -50,3 +50,6 @@ jobs:
 
       - name: End-to-end
         run: pnpm test:e2e
+
+      - name: End-to-end (Pages subpath)
+        run: pnpm test:e2e:subpath

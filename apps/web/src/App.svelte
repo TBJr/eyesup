@@ -17,8 +17,12 @@
   } from '@eyesup/engine';
   import en from '@eyesup/ui/strings/en.json';
   import fr from '@eyesup/ui/strings/fr.json';
+  import CrossoverChart from '@eyesup/ui/CrossoverChart.svelte';
+  import Hands from '@eyesup/ui/Hands.svelte';
+  import Posture from '@eyesup/ui/Posture.svelte';
   import Keyboard from './components/Keyboard.svelte';
   import TypingSurface from './components/TypingSurface.svelte';
+  import WelcomeScreen from './screens/WelcomeScreen.svelte';
   import { applyDisplaySettings, DEFAULT_ACCESS } from './lib/display.js';
   import { getContentPackForLayout, LAYOUTS } from './lib/content.js';
   import {
@@ -67,14 +71,21 @@
     type StorageAdapter,
   } from './storage/types.js';
 
-  const storage: StorageAdapter = createStorageAdapter();
-  const isDesktop = detectIsTauri();
+  /** Lazy so Tauri's window.__TAURI__ is present before adapter selection. */
+  let storageAdapter: StorageAdapter | null = null;
+  function getStorage(): StorageAdapter {
+    if (!storageAdapter) storageAdapter = createStorageAdapter();
+    return storageAdapter;
+  }
+
+  let isDesktop = $state(false);
   const GOAL_OPTIONS = goalWpmOptions(15, 80);
 
   let route = $state<Route>('welcome');
   let profile = $state<ProfileRecord | null>(null);
   let baseline = $state<BaselineRecord | null>(null);
   let ready = $state(false);
+  let bootError = $state(false);
   let updateWaiting = $state(false);
   /** Where the pending update came from — SW reload vs desktop apply_update. */
   let updateSource = $state<'sw' | 'desktop' | null>(null);
@@ -169,42 +180,72 @@
     }
     if (route === 'settings') {
       void (async () => {
-        baseline = await storage.getBaseline();
+        baseline = await getStorage().getBaseline();
       })();
     }
   });
 
+  function applyBootRouting(): void {
+    const emptyHash =
+      !window.location.hash || window.location.hash === '#/' || window.location.hash === '#';
+    route = parseHash(window.location.hash);
+
+    if (isTouchFirstDevice()) {
+      deviceBanner = true;
+      if (emptyHash) {
+        navigate('device');
+        return;
+      }
+    }
+
+    if (profile) {
+      applyDisplaySettings(profile.accessProfile);
+      if (emptyHash) {
+        navigate('today');
+      }
+      return;
+    }
+
+    // No profile: never leave people on a destination with an empty shell.
+    if (isDesktop) {
+      navigate('desktop-import');
+      return;
+    }
+    if (emptyHash || isDestination(route)) {
+      navigate('welcome');
+    }
+  }
+
+  async function bootFromStorage(): Promise<void> {
+    bootError = false;
+    try {
+      isDesktop = detectIsTauri();
+      profile = await getStorage().getProfile();
+      baseline = await getStorage().getBaseline();
+      applyBootRouting();
+    } catch (err) {
+      console.error('EyesUp: storage boot failed', err);
+      bootError = true;
+      profile = null;
+      baseline = null;
+    } finally {
+      ready = true;
+    }
+  }
+
   onMount(() => {
     const sync = () => {
       route = parseHash(window.location.hash);
+      if (ready && !bootError && !profile && isDestination(route)) {
+        navigate(isDesktop ? 'desktop-import' : 'welcome');
+      }
     };
     sync();
     window.addEventListener('hashchange', sync);
 
-    void (async () => {
-      profile = await storage.getProfile();
-      baseline = await storage.getBaseline();
-      if (isTouchFirstDevice()) {
-        deviceBanner = true;
-        if (!window.location.hash || window.location.hash === '#/' || window.location.hash === '#') {
-          navigate('device');
-          ready = true;
-          return;
-        }
-      }
-      if (profile) {
-        applyDisplaySettings(profile.accessProfile);
-        if (!window.location.hash || window.location.hash === '#/' || window.location.hash === '#') {
-          navigate('today');
-        }
-      } else if (isDesktop) {
-        navigate('desktop-import');
-      } else if (!window.location.hash) {
-        navigate('welcome');
-      }
-      ready = true;
-    })();
+    void bootFromStorage();
 
+    isDesktop = detectIsTauri();
     if ('serviceWorker' in navigator && !isDesktop) {
       void navigator.serviceWorker.register(
         `${import.meta.env.BASE_URL}sw.js`.replace(/\/{2,}/g, '/'),
@@ -267,6 +308,15 @@
     updateSource = null;
   }
 
+  async function startFromWelcome() {
+    orientStep = 0;
+    navigate('orient');
+  }
+
+  function triggerWelcomeImport() {
+    document.getElementById('welcome-import-input')?.click();
+  }
+
   async function skipDesktopImport() {
     desktopImportError = '';
     navigate('welcome');
@@ -285,9 +335,9 @@
       if (!data || typeof data !== 'object' || data.schemaVersion == null) {
         throw new Error('invalid');
       }
-      await storage.importJson(data);
-      profile = await storage.getProfile();
-      baseline = await storage.getBaseline();
+      await getStorage().importJson(data);
+      profile = await getStorage().getProfile();
+      baseline = await getStorage().getBaseline();
       if (profile) applyDisplaySettings(profile.accessProfile);
       navigate(profile ? 'today' : 'welcome');
     } catch {
@@ -311,10 +361,10 @@
   async function loadProgressData() {
     if (!profile) return;
     const [keys, sessions, milestones, base] = await Promise.all([
-      storage.getKeyStats(profile.layoutId),
-      storage.listSessions(),
-      storage.listMilestones(),
-      storage.getBaseline(),
+      getStorage().getKeyStats(profile.layoutId),
+      getStorage().listSessions(),
+      getStorage().listMilestones(),
+      getStorage().getBaseline(),
     ]);
     progressKeys = keys;
     progressSessions = sessions;
@@ -336,7 +386,7 @@
   }
 
   async function loadOwnTexts() {
-    ownTexts = await storage.listOwnTexts();
+    ownTexts = await getStorage().listOwnTexts();
   }
 
   function onGlobalKey(e: KeyboardEvent) {
@@ -346,7 +396,7 @@
       return;
     }
     if (route === 'welcome' && e.key === 'Enter') {
-      navigate('orient');
+      void startFromWelcome();
       return;
     }
     if (route === 'orient' && e.key === 'Enter') {
@@ -380,7 +430,7 @@
         activeTrack = TRACK_OPTIONS[n - 1]!;
         if (profile) {
           profile = { ...profile, track: activeTrack, updatedAt: new Date().toISOString() };
-          void storage.putProfile(profile);
+          void getStorage().putProfile(profile);
         }
         return;
       }
@@ -483,17 +533,17 @@
         placedTrack,
         updatedAt: new Date().toISOString(),
       };
-      await storage.putProfile(profile);
+      await getStorage().putProfile(profile);
     }
     navigate('today');
   }
 
   async function persistLine() {
     if (!profile || !currentLine) return;
-    const sessions = await storage.listSessions();
+    const sessions = await getStorage().listSessions();
     const current = sessions[sessions.length - 1];
     if (!current) return;
-    await storage.saveLineResult({
+    await getStorage().saveLineResult({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       sessionId: current.id,
       position: lineIndex + 1,
@@ -506,9 +556,9 @@
       savedAt: new Date().toISOString(),
     });
     if (currentLine.kind === 'blind_check') {
-      await ensureMilestone(storage, MILESTONE.firstBlindLine, { sessionId: current.id });
+      await ensureMilestone(getStorage(), MILESTONE.firstBlindLine, { sessionId: current.id });
       if (lastLineWpm >= 30) {
-        await ensureMilestone(storage, MILESTONE.first30WpmBlind, {
+        await ensureMilestone(getStorage(), MILESTONE.first30WpmBlind, {
           sessionId: current.id,
           netWpm: Math.round(lastLineWpm),
         });
@@ -535,7 +585,7 @@
     for (const [code, n] of counts) {
       const next = bumpKeyStatAfterLine(byCode.get(code), profile.layoutId, code, nowIso, n);
       byCode.set(code, next);
-      await storage.putKeyStat(next);
+      await getStorage().putKeyStat(next);
     }
     sessionKeyRecords = [...byCode.values()];
   }
@@ -557,10 +607,10 @@
 
   async function finishSession() {
     if (!profile) return;
-    const sessions = await storage.listSessions();
+    const sessions = await getStorage().listSessions();
     const current = sessions[sessions.length - 1];
     if (current) {
-      await storage.updateSession({
+      await getStorage().updateSession({
         ...current,
         endedAt: new Date().toISOString(),
         activeMs: sessionActiveMs,
@@ -572,9 +622,9 @@
     for (const rec of sessionKeyRecords) {
       const level = levels[rec.code];
       if (level != null && level !== rec.guideLevel) {
-        await storage.putKeyStat({ ...rec, guideLevel: level as GuideLevel });
+        await getStorage().putKeyStat({ ...rec, guideLevel: level as GuideLevel });
       } else {
-        await storage.putKeyStat(rec);
+        await getStorage().putKeyStat(rec);
       }
     }
     const today = new Date().toISOString().slice(0, 10);
@@ -588,10 +638,10 @@
       lastPracticeDate: today,
       updatedAt: new Date().toISOString(),
     };
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
 
     const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
-    const keyRecords = await storage.getKeyStats(profile.layoutId);
+    const keyRecords = await getStorage().getKeyStats(profile.layoutId);
     const letterCodes = layoutObj.keys
       .filter((k) => k.base && /^[a-z]$/i.test(k.base) && k.learn !== false)
       .map((k) => k.code);
@@ -599,16 +649,16 @@
       letterCodes.length > 0 &&
       letterCodes.every((code) => keyRecords.some((k) => k.code === code && k.unlockedAt))
     ) {
-      await ensureMilestone(storage, MILESTONE.allLettersUnlocked, {
+      await ensureMilestone(getStorage(), MILESTONE.allLettersUnlocked, {
         layoutId: profile.layoutId,
       });
     }
 
-    const base = await storage.getBaseline();
-    const allSessions = await storage.listSessions();
+    const base = await getStorage().getBaseline();
+    const allSessions = await getStorage().listSessions();
     const cx = crossoverFromBaseline(base, allSessions);
     if (cx?.crossed) {
-      await ensureMilestone(storage, MILESTONE.crossoverReached, {
+      await ensureMilestone(getStorage(), MILESTONE.crossoverReached, {
         gap: Math.round(cx.gap * 10) / 10,
       });
     }
@@ -619,8 +669,8 @@
     timedTestMode = false;
     timedTestEndsAt = 0;
     const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
-    const keyRecords = await storage.getKeyStats(profile.layoutId);
-    const pairRecords = await storage.getPairStats(profile.layoutId);
+    const keyRecords = await getStorage().getKeyStats(profile.layoutId);
+    const pairRecords = await getStorage().getPairStats(profile.layoutId);
     sessionKeyRecords = keyRecords;
 
     const unlocked = unlockedGroupCountForTrack(layoutObj, keyRecords, profile.track);
@@ -642,7 +692,7 @@
         unlockedGroupCount: unlocked,
         keys,
         pairs,
-        sessionCount: (await storage.listSessions()).length,
+        sessionCount: (await getStorage().listSessions()).length,
         dailyMinutes: profile.dailyMinutes,
       },
       layout: layoutObj,
@@ -659,7 +709,7 @@
     linePlay = createLinePlay();
     continuousMs = 0;
     sessionActiveMs = 0;
-    await storage.createSession({
+    await getStorage().createSession({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       layoutId: profile.layoutId,
       track: profile.track,
@@ -688,8 +738,8 @@
     linePlay = createLinePlay();
     continuousMs = 0;
     sessionActiveMs = 0;
-    sessionKeyRecords = await storage.getKeyStats(profile.layoutId);
-    await storage.createSession({
+    sessionKeyRecords = await getStorage().getKeyStats(profile.layoutId);
+    await getStorage().createSession({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       layoutId: profile.layoutId,
       track: profile.track,
@@ -702,14 +752,14 @@
       peeks: 0,
       blindCheck: false,
     });
-    await storage.putOwnText({ ...text, practised: text.practised + 1 });
+    await getStorage().putOwnText({ ...text, practised: text.practised + 1 });
     navigate('practice');
   }
 
   async function startTimedTest() {
     if (!profile) return;
     const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
-    const keyRecords = await storage.getKeyStats(profile.layoutId);
+    const keyRecords = await getStorage().getKeyStats(profile.layoutId);
     const unlocked = Math.max(
       4,
       unlockedGroupCountForTrack(layoutObj, keyRecords, profile.track),
@@ -738,7 +788,7 @@
     continuousMs = 0;
     sessionActiveMs = 0;
     sessionKeyRecords = keyRecords;
-    await storage.createSession({
+    await getStorage().createSession({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       layoutId: profile.layoutId,
       track: profile.track,
@@ -758,7 +808,7 @@
     const title = ownTitle.trim();
     const body = ownBody.trim();
     if (!body) return;
-    await storage.putOwnText({
+    await getStorage().putOwnText({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       title: title || 'Untitled',
       body,
@@ -773,7 +823,7 @@
   }
 
   async function deleteOwnText(id: number) {
-    await storage.deleteOwnText(id);
+    await getStorage().deleteOwnText(id);
     await loadOwnTexts();
   }
 
@@ -785,7 +835,7 @@
       commitWeekCheckIns: 0,
       updatedAt: new Date().toISOString(),
     };
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
   }
 
   async function checkInCommitWeek() {
@@ -796,7 +846,7 @@
       commitWeekCheckIns: next,
       updatedAt: new Date().toISOString(),
     };
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
   }
 
   async function switchToPlacedTrack() {
@@ -806,13 +856,13 @@
       track: baseline.placedTrack,
       updatedAt: new Date().toISOString(),
     };
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
   }
 
   async function setTrack(track: Track) {
     if (!profile) return;
     profile = { ...profile, track, updatedAt: new Date().toISOString() };
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
   }
 
   async function setGoalWpm(goalWpm: number) {
@@ -824,7 +874,7 @@
       targetWpm: Math.min(profile.targetWpm, clamped),
       updatedAt: new Date().toISOString(),
     };
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
   }
 
   async function setSound(sound: boolean) {
@@ -835,7 +885,7 @@
       updatedAt: new Date().toISOString(),
     };
     applyDisplaySettings(profile.accessProfile);
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
   }
 
   async function finishProbesAndPlace() {
@@ -888,7 +938,7 @@
       createdAt: now,
       updatedAt: now,
     };
-    await storage.putProfile(profile);
+    await getStorage().putProfile(profile);
     const base: BaselineRecord = {
       schemaVersion: STORAGE_SCHEMA_VERSION,
       id: 1,
@@ -904,7 +954,7 @@
       placedTrack,
       takenAt: now,
     };
-    await storage.putBaseline(base);
+    await getStorage().putBaseline(base);
     baseline = base;
     applyDisplaySettings(access);
     navigate('result');
@@ -940,7 +990,7 @@
   }
 
   async function exportData() {
-    const data = await storage.exportJson();
+    const data = await getStorage().exportJson();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -953,7 +1003,7 @@
   async function deleteAll() {
     const ok = window.prompt(t.settings.deleteConfirm);
     if (ok !== 'DELETE') return;
-    await storage.deleteEverything();
+    await getStorage().deleteEverything();
     profile = null;
     baseline = null;
     navigate('welcome');
@@ -967,7 +1017,7 @@
       updatedAt: new Date().toISOString(),
     };
     applyDisplaySettings(profile.accessProfile);
-    void storage.putProfile(profile);
+    void getStorage().putProfile(profile);
   }
 
   function setTextSize(delta: number) {
@@ -979,7 +1029,7 @@
       updatedAt: new Date().toISOString(),
     };
     applyDisplaySettings(profile.accessProfile);
-    void storage.putProfile(profile);
+    void getStorage().putProfile(profile);
   }
 
   function confidenceForKey(rec: KeyStatRecord): number {
@@ -1009,7 +1059,13 @@
 <svelte:window onkeydown={onGlobalKey} />
 
 {#if !ready}
-  <main class="page"><p>{t.app.name}</p></main>
+  <main class="page"><p>{t.app.loading}</p></main>
+{:else if bootError}
+  <main class="page" role="alert">
+    <h1>{t.app.name}</h1>
+    <p>{t.app.loadFailed}</p>
+    <button type="button" onclick={() => { ready = false; void bootFromStorage(); }}>{t.app.retry}</button>
+  </main>
 {:else}
   {#if isDestination(route) && profile}
     <nav class="nav" aria-label={t.nav.label}>
@@ -1030,37 +1086,71 @@
 
   <main class="page" data-route={route}>
     {#if route === 'device'}
-      <h1>{t.device.title}</h1>
-      <p>{t.device.body}</p>
-      <button type="button" onclick={copyAppLink}>{t.device.copy}</button>
+      <div class="device-screen result-card">
+        <h1>{t.device.title}</h1>
+        <p>{t.device.body}</p>
+        <button type="button" onclick={copyAppLink}>{t.device.copy}</button>
+      </div>
     {:else if route === 'desktop-import'}
-      <h1>{t.desktop.importTitle}</h1>
-      <p>{t.desktop.importBody}</p>
-      <label class="file-pick">
-        {t.desktop.importChoose}
-        <input
-          type="file"
-          accept="application/json,.json"
-          disabled={desktopImportBusy}
-          onchange={(e) => void onDesktopImportFile(e)}
-        />
-      </label>
-      <button type="button" disabled={desktopImportBusy} onclick={() => void skipDesktopImport()}>
-        {t.desktop.importSkip}
-      </button>
-      {#if desktopImportError}
-        <p role="alert">{desktopImportError}</p>
-      {/if}
-      <p class="hint">{t.questions.continue}</p>
+      <div class="desktop-import-screen result-card">
+        <h1>{t.desktop.importTitle}</h1>
+        <p>{t.desktop.importBody}</p>
+        <label class="file-pick">
+          {t.desktop.importChoose}
+          <input
+            type="file"
+            accept="application/json,.json"
+            disabled={desktopImportBusy}
+            onchange={(e) => void onDesktopImportFile(e)}
+          />
+        </label>
+        <button type="button" disabled={desktopImportBusy} onclick={() => void skipDesktopImport()}>
+          {t.desktop.importSkip}
+        </button>
+        {#if desktopImportError}
+          <p role="alert">{desktopImportError}</p>
+        {/if}
+        <p class="hint">{t.questions.continue}</p>
+      </div>
     {:else if route === 'welcome'}
-      <h1>{t.welcome.title}</h1>
-      <p>{t.welcome.body}</p>
-      <p class="hint">{t.welcome.start}</p>
+      <input
+        id="welcome-import-input"
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onchange={(e) => void onDesktopImportFile(e)}
+      />
+      <WelcomeScreen
+        {t}
+        {layout}
+        layoutLine={`${layout.id}`}
+        onStart={() => void startFromWelcome()}
+        onImport={triggerWelcomeImport}
+      />
     {:else if route === 'orient'}
-      <h1>{t.orient.title}</h1>
-      <p>{orientSteps[orientStep]}</p>
-      <p class="hint">{t.orient.next}</p>
-      <Keyboard {layout} mode="zones" hands="rest" numbers={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+      <div class="orient-screen">
+        <p class="eyebrow">
+          {t.orient.stepOf
+            .replace('{n}', String(orientStep + 1))
+            .replace('{total}', String(orientSteps.length))}
+        </p>
+        <h1>{t.orient.title}</h1>
+        <p>{orientSteps[orientStep]}</p>
+        {#if orientStep === 0}
+          <Posture label={t.orient.postureAlt} />
+        {:else if orientStep === 1}
+          <Keyboard {layout} mode="zones" hands="rest" target="KeyF" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+        {:else if orientStep === 2}
+          <Keyboard {layout} mode="zones" hands="rest" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+        {:else if orientStep === 3}
+          <Keyboard {layout} mode="zones" hands="reach" target="KeyE" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+        {:else if orientStep === 4}
+          <Keyboard {layout} mode="zones" hands="reach" target="KeyR" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+        {:else}
+          <Keyboard {layout} mode="zones" hands="reach" target="KeyO" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+        {/if}
+        <p class="hint">{orientStep >= orientSteps.length - 1 ? t.orient.done : t.orient.next}</p>
+      </div>
     {:else if route === 'questions'}
       {@const q = questions[questionIndex]!}
       <h1>{q.prompt}</h1>
@@ -1080,35 +1170,53 @@
       <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
       <pre class="probe" tabindex="0" onkeydown={onProbeAKey}>{t.probeA.passage}</pre>
     {:else if route === 'probe-b'}
-      <h1>{t.probeB.title}</h1>
-      <p>{probeBHome < 4 ? t.probeB.home : t.probeB.blind}</p>
-      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <pre class="probe" tabindex="0" onkeydown={onProbeBKey}>{probeBHome < 4 ? t.probeB.homeLabel : t.probeB.passage}</pre>
+      <div class="probe-screen">
+        <h1>{t.probeB.title}</h1>
+        <p>{probeBHome < 4 ? t.probeB.home : t.probeB.blind}</p>
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <pre class="probe" tabindex="0" onkeydown={onProbeBKey}>{probeBHome < 4 ? t.probeB.homeLabel : t.probeB.passage}</pre>
+        {#if probeBHome < 4}
+          <Keyboard
+            {layout}
+            mode="zones"
+            hands="rest"
+            target={(['KeyF', 'KeyJ', 'KeyA', 'Semicolon'] as const)[probeBHome]!}
+            numbers={true}
+            framed={true}
+            reducedMotion={false}
+          />
+        {:else}
+          <Hands {layout} mode="rest" label={t.a11y.handsRest} />
+        {/if}
+      </div>
     {:else if route === 'result'}
-      <h1>{t.result.title}</h1>
-      <p>{t.result.reason}: {placementReason}</p>
-      <p>{t.result.layout}: {detectedLayout}</p>
-      <p data-testid="placed-track">placed: {placedTrack}</p>
-      <p data-testid="active-track">active: {activeTrack}</p>
-      <label>
-        {t.result.override}
-        <select
-          value={activeTrack}
-          onchange={(e) => {
-            activeTrack = e.currentTarget.value as Track;
-            if (profile) {
-              profile = { ...profile, track: activeTrack, updatedAt: new Date().toISOString() };
-              void storage.putProfile(profile);
-            }
-          }}
-        >
-          {#each TRACK_OPTIONS as tr, i}
-            <option value={tr}>{i + 1}. {tr}</option>
-          {/each}
-        </select>
-      </label>
-      <p class="hint">{t.result.continue}</p>
+      <div class="result-card">
+        <h1>{t.result.title}</h1>
+        <p><strong>{placedTrack}</strong></p>
+        <p>{t.result.reason}: {placementReason}</p>
+        <p>{t.result.layout}: {detectedLayout}</p>
+        <p data-testid="placed-track">placed: {placedTrack}</p>
+        <p data-testid="active-track">active: {activeTrack}</p>
+        <label>
+          {t.result.override}
+          <select
+            value={activeTrack}
+            onchange={(e) => {
+              activeTrack = e.currentTarget.value as Track;
+              if (profile) {
+                profile = { ...profile, track: activeTrack, updatedAt: new Date().toISOString() };
+                void getStorage().putProfile(profile);
+              }
+            }}
+          >
+            {#each TRACK_OPTIONS as tr, i}
+              <option value={tr}>{i + 1}. {tr}</option>
+            {/each}
+          </select>
+        </label>
+        <p class="hint">{t.result.continue}</p>
+      </div>
     {:else if route === 'today'}
       <h1>{t.today.title}</h1>
       <p>{t.today.streak}: {profile?.streakDays ?? 0} {t.today.days}</p>
@@ -1165,7 +1273,15 @@
       {/if}
       {#if sessionUi === 'handsReady'}
         <h1>{t.practice.handsReady}</h1>
-        <Keyboard {layout} mode="levels" hands="rest" target="KeyF" {levels} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+        <Keyboard
+          {layout}
+          mode="levels"
+          hands="rest"
+          target="KeyF"
+          {levels}
+          framed={true}
+          reducedMotion={profile?.accessProfile.reducedMotion ?? false}
+        />
       {:else if sessionUi === 'paused'}
         <p role="status">{t.practice.paused}</p>
       {:else if sessionUi === 'lineResult'}
@@ -1208,6 +1324,10 @@
           peek={inputState.peeking}
           reducedMotion={profile?.accessProfile.reducedMotion ?? false}
         />
+      {:else}
+        <h1>{t.practice.notStarted}</h1>
+        <p class="hint">{t.practice.backToToday}</p>
+        <button type="button" onclick={() => navigate('today')}>{t.practice.backToToday}</button>
       {/if}
     {:else if route === 'progress'}
       <h1>{t.progress.title}</h1>
@@ -1215,21 +1335,21 @@
       <section aria-labelledby="heatmap-heading">
         <h2 id="heatmap-heading">{t.progress.heatmap}</h2>
         <p class="hint">{t.progress.heatmapHint}</p>
-        <ul class="heatmap" role="list">
-          {#each progressKeys as rec}
-            {@const conf = confidenceForKey(rec)}
-            <li
-              class="heat-cell"
-              style={`--conf: ${conf}; background-color: color-mix(in srgb, var(--color-accent, #2f6fed) ${Math.round(conf * 100)}%, transparent); opacity: ${0.35 + conf * 0.65}`}
-              title={`${rec.code}: ${Math.round(conf * 100)}%`}
-            >
-              <span class="heat-code">{rec.code.replace(/^Key/, '')}</span>
-              <span class="heat-pct">{Math.round(conf * 100)}%</span>
-            </li>
-          {:else}
-            <li class="hint">{t.progress.noSessions}</li>
-          {/each}
-        </ul>
+        {#if progressKeys.length === 0}
+          <p>{t.progress.noSessions}</p>
+        {:else}
+          {@const heatMap = Object.fromEntries(progressKeys.map((rec) => [rec.code, confidenceForKey(rec)]))}
+          <Keyboard
+            {layout}
+            mode="heat"
+            hands="none"
+            heat={heatMap}
+            numbers={true}
+            framed={true}
+            label={t.a11y.heatmap}
+            reducedMotion={profile?.accessProfile.reducedMotion ?? false}
+          />
+        {/if}
       </section>
       <section aria-labelledby="history-heading">
         <h2 id="history-heading">{t.progress.history}</h2>
@@ -1261,6 +1381,12 @@
       {#if crossover && baseline}
         <section aria-labelledby="progress-crossover">
           <h2 id="progress-crossover">{t.progress.crossover}</h2>
+          <CrossoverChart
+            baselineWpm={baseline.sightedWpm ?? 30}
+            currentBlindWpm={(baseline.sightedWpm ?? 30) + crossover.gap}
+            crossed={crossover.crossed}
+            label={t.a11y.crossoverChart}
+          />
           {#if crossover.crossed}
             <p>{t.today.crossoverReached}</p>
           {:else}
@@ -1272,10 +1398,13 @@
         </section>
       {/if}
     {:else if route === 'library'}
+      <div class="library-hub">
       <h1>{t.library.title}</h1>
-      <button type="button" onclick={() => { orientStep = 0; navigate('orient'); }}>{t.library.orient}</button>
-      <button type="button" onclick={() => void startTimedTest()}>{t.library.timedTestStart}</button>
-      <section aria-labelledby="own-text-heading">
+      <div class="library-actions">
+        <button type="button" onclick={() => { orientStep = 0; navigate('orient'); }}>{t.library.orient}</button>
+        <button type="button" onclick={() => void startTimedTest()}>{t.library.timedTestStart}</button>
+      </div>
+      <section class="settings-group" aria-labelledby="own-text-heading">
         <h2 id="own-text-heading">{t.library.ownText}</h2>
         <label>
           {t.library.ownTextTitle}
@@ -1300,8 +1429,11 @@
           </ul>
         {/if}
       </section>
+      </div>
     {:else if route === 'settings'}
+      <div class="settings-groups">
       <h1>{t.settings.title}</h1>
+      <div class="settings-group">
       <label>
         {t.settings.layout}
         <select
@@ -1309,7 +1441,7 @@
           onchange={(e) => {
             if (!profile) return;
             profile = { ...profile, layoutId: e.currentTarget.value, updatedAt: new Date().toISOString() };
-            void storage.putProfile(profile);
+            void getStorage().putProfile(profile);
           }}
         >
           <option value="qwerty-us">{t.layouts.qwertyUs}</option>
@@ -1371,7 +1503,7 @@
               updatedAt: new Date().toISOString(),
             };
             applyDisplaySettings(profile.accessProfile);
-            void storage.putProfile(profile);
+            void getStorage().putProfile(profile);
           }}
         />
         {t.settings.reducedMotion}
@@ -1394,7 +1526,7 @@
             };
             profile = next;
             applyDisplaySettings(next.accessProfile);
-            void storage.putProfile(next);
+            void getStorage().putProfile(next);
           }}
         >
           <option value="default">{t.settings.fingerMapDefault}</option>
@@ -1421,13 +1553,15 @@
             };
             profile = next;
             applyDisplaySettings(next.accessProfile);
-            void storage.putProfile(next);
+            void getStorage().putProfile(next);
           }}
         />
         {t.settings.dyslexiaFont}
       </label>
       <button type="button" onclick={() => void exportData()}>{t.settings.export}</button>
       <button type="button" onclick={() => void deleteAll()}>{t.settings.delete}</button>
+      </div>
+      </div>
     {/if}
   </main>
 {/if}
@@ -1438,11 +1572,58 @@
     margin: 0 auto;
     padding: var(--space-6, 1.5rem);
   }
+  .page[data-route='welcome'] {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .orient-screen,
+  .probe-screen {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .eyebrow {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-ink-secondary, #5b616b);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .result-card {
+    padding: 1.5rem;
+    border-radius: var(--radius-panel, 20px);
+    background: var(--color-surface-card, #fff);
+    border: 1px solid var(--color-surface-border, #e4e1da);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .device-screen,
+  .desktop-import-screen,
+  .library-hub,
+  .settings-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .settings-group {
+    padding: 1.25rem;
+    border-radius: var(--radius-card, 12px);
+    background: var(--color-surface-card, #fff);
+    border: 1px solid var(--color-surface-border, #e4e1da);
+  }
+  .library-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
   .nav {
     display: flex;
     gap: 1rem;
     padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid var(--color-border-subtle, #c9ced6);
+    border-bottom: 1px solid var(--color-surface-border, #e4e1da);
     font-family: var(--font-family-ui, sans-serif);
   }
   .nav a {
@@ -1504,28 +1685,9 @@
   }
   .probe {
     padding: 1rem;
-    border: 1px solid var(--color-border-subtle, #c9ced6);
+    border: 1px solid var(--color-surface-border, #e4e1da);
     font-family: var(--font-family-practice, monospace);
     white-space: pre-wrap;
-  }
-  .heatmap {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
-    gap: 0.35rem;
-    list-style: none;
-    padding: 0;
-  }
-  .heat-cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.35rem;
-    border: 1px solid var(--color-border-subtle, #c9ced6);
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-  }
-  .heat-pct {
-    font-variant-numeric: tabular-nums;
   }
   .history {
     padding-left: 1.25rem;
@@ -1543,8 +1705,8 @@
   }
   .device-banner {
     padding: 0.75rem 1.5rem;
-    background: var(--color-surface-raised, #efece4);
-    border-bottom: 1px solid var(--color-border-subtle, #c9ced6);
+    background: var(--color-surface-muted, #f1efea);
+    border-bottom: 1px solid var(--color-surface-border, #e4e1da);
     font-family: var(--font-family-ui, sans-serif);
   }
   :global(:focus-visible) {

@@ -3,13 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
+    <!-- style-src unsafe-inline: Vite/Svelte inject component CSS in dev; production CSS is linked files. connect-src ws: local HMR only. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+    />
     <meta name="theme-color" content="#2f6fed" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./boot.css" />
     <title>EyesUp</title>
   </head>
   <body>
-    <div id="app"></div>
+    <noscript>
+      <main class="boot-fallback">
+        <h1>EyesUp</h1>
+        <p>
+          EyesUp needs JavaScript to run. Enable JavaScript, or open the app with
+          <code>pnpm dev</code> at <code>http://localhost:5173/#/welcome</code>.
+        </p>
+      </main>
+    </noscript>
+    <div id="app">
+      <main class="boot-fallback">
+        <h1>EyesUp</h1>
+        <p>Loading… If this message stays, check the browser console or run <code>pnpm dev</code>.</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

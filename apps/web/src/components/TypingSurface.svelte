@@ -38,7 +38,7 @@
     word-break: break-word;
   }
   .ch {
-    color: var(--color-ink-secondary, #5b616b);
+    color: var(--color-ink-untyped, #8a8f98);
   }
   .ch.done {
     color: var(--color-ink-primary, #16181d);

@@ -7,8 +7,14 @@ const base = (globalThis as { process?: { env?: Record<string, string | undefine
 export default defineConfig({
   base,
   plugins: [svelte()],
+  resolve: {
+    dedupe: ['svelte'],
+  },
   server: {
     port: 5173,
+    fs: {
+      allow: ['../..'],
+    },
   },
   preview: {
     port: 4173,

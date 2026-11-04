@@ -1,7 +1,10 @@
 {
   "app": {
     "name": "EyesUp",
-    "tagline": "Learn to type without looking at the keyboard."
+    "tagline": "Learn to type without looking at the keyboard.",
+    "loading": "Loading…",
+    "loadFailed": "EyesUp could not load your progress. Check that storage is available, then try again.",
+    "retry": "Try again"
   },
   "nav": {
     "today": "Today",
@@ -13,8 +16,22 @@
   },
   "welcome": {
     "title": "EyesUp",
-    "body": "Learn to type with your eyes on the screen. No account needed.",
-    "start": "Press Enter to begin"
+    "eyebrow": "Touch typing, taught properly",
+    "headline": "Type without looking at the keyboard.",
+    "body": "EyesUp first finds out how you type today, then teaches what's missing, a few minutes a day. The keyboard on screen fades as your fingers learn, until you don't need it.",
+    "cta": "Start the 3-minute check",
+    "start": "Press Enter to begin",
+    "privacyLine": "No account. Your progress stays on this device.",
+    "import": "Import progress from a file",
+    "featureCheckTitle": "A 3-minute check first",
+    "featureCheckBody": "Six quick questions and two short typing tests decide where you start. Beginners and fast two-finger typists need different things.",
+    "featureFadeTitle": "A guide that fades",
+    "featureFadeBody": "Every key starts coloured by finger and fades on its own as you master it. If you start slipping, it comes back.",
+    "featureSlowTitle": "Planned for the slow part",
+    "featureSlowBody": "If you already type by looking, you'll be slower for a while. EyesUp shows you when typing blind overtakes your old speed.",
+    "footerOffline": "Works offline after this first visit",
+    "footerPrivacy": "How we handle your data",
+    "keyboardLabel": "Two hands resting on a keyboard whose keys are coloured by finger"
   },
   "orient": {
     "title": "Orient",
@@ -26,7 +43,9 @@
     "oFinger": "O is typed with the right ring finger.",
     "done": "Press Enter when you are ready",
     "next": "Press Enter for the next step",
-    "replay": "Replay Orient"
+    "replay": "Replay Orient",
+    "stepOf": "Step {n} of {total}",
+    "postureAlt": "Side view: sit tall with the screen near eye level and wrists level"
   },
   "questions": {
     "continue": "Press Enter to continue",
@@ -94,7 +113,9 @@
     "done": "Done — back to Today",
     "wpm": "WPM",
     "accuracy": "Accuracy",
-    "slowest": "Slowest key"
+    "slowest": "Slowest key",
+    "notStarted": "No practice session yet. Start from Today.",
+    "backToToday": "Back to Today"
   },
   "progress": {
     "title": "Progress",
@@ -168,6 +189,12 @@
   },
   "a11y": {
     "keyboard": "On-screen keyboard",
-    "typingSurface": "Practice text"
+    "typingSurface": "Practice text",
+    "handsRest": "Hands resting on the home row with fingertips on F and J",
+    "handsReach": "Finger reaching from its home key to the target",
+    "crossoverChart": "Chart of blind speed against day-one sighted baseline",
+    "heatmap": "Keyboard heatmap of confidence per key",
+    "crossoverReachedLabel": "Crossed",
+    "reachArrow": "↓"
   }
 }

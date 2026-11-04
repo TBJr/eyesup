@@ -14,6 +14,7 @@
   --color-hand-line: #8F897D;
   --color-heat-high: #2F5BEA;
   --color-heat-low: #E8EEFC;
+  --color-ink-on-accent: #FFFFFF;
   --color-ink-primary: #16181D;
   --color-ink-secondary: #5B616B;
   --color-ink-untyped: #8A8F98;
@@ -65,8 +66,9 @@
   --color-guide-outline: #5B616B;
   --color-hand-fill: #3A3F47;
   --color-hand-line: #6B7078;
-  --color-heat-high: #2F5BEA;
-  --color-heat-low: #E8EEFC;
+  --color-heat-high: #6E8CFF;
+  --color-heat-low: #1A2338;
+  --color-ink-on-accent: #121417;
   --color-ink-primary: #ECEAE4;
   --color-ink-secondary: #A3A8B0;
   --color-ink-untyped: #8A8F98;
@@ -94,8 +96,9 @@
   --color-guide-outline: #5B616B;
   --color-hand-fill: #3A3F47;
   --color-hand-line: #6B7078;
-  --color-heat-high: #2F5BEA;
-  --color-heat-low: #E8EEFC;
+  --color-heat-high: #6E8CFF;
+  --color-heat-low: #1A2338;
+  --color-ink-on-accent: #121417;
   --color-ink-primary: #ECEAE4;
   --color-ink-secondary: #A3A8B0;
   --color-ink-untyped: #8A8F98;
@@ -124,6 +127,7 @@
   --color-hand-line: #8F897D;
   --color-heat-high: #2F5BEA;
   --color-heat-low: #E8EEFC;
+  --color-ink-on-accent: #FFFFFF;
   --color-ink-primary: #000000;
   --color-ink-secondary: #5B616B;
   --color-ink-untyped: #8A8F98;

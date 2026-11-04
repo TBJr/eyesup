@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');
+  src: url('../public/fonts/AtkinsonHyperlegible-Regular.woff2') format('woff2');
 }
 
 @font-face {
@@ -11,7 +11,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/AtkinsonHyperlegible-Bold.woff2') format('woff2');
+  src: url('../public/fonts/AtkinsonHyperlegible-Bold.woff2') format('woff2');
 }
 
 @font-face {
@@ -19,7 +19,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+  src: url('../public/fonts/JetBrainsMono-Regular.woff2') format('woff2');
 }
 
 @font-face {
@@ -27,7 +27,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+  src: url('../public/fonts/JetBrainsMono-Bold.woff2') format('woff2');
 }
 
 *,

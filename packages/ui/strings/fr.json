@@ -1,7 +1,10 @@
 {
   "app": {
     "name": "EyesUp",
-    "tagline": "Apprenez a taper sans regarder le clavier."
+    "tagline": "Apprenez a taper sans regarder le clavier.",
+    "loading": "Chargement…",
+    "loadFailed": "EyesUp n'a pas pu charger vos progres. Verifiez que le stockage est disponible, puis reessayez.",
+    "retry": "Reessayer"
   },
   "nav": {
     "today": "Aujourd'hui",
@@ -13,8 +16,22 @@
   },
   "welcome": {
     "title": "EyesUp",
-    "body": "Apprenez a taper les yeux sur l'ecran. Aucun compte requis.",
-    "start": "Appuyez sur Entree pour commencer"
+    "eyebrow": "La dactylographie, enseignee correctement",
+    "headline": "Tapez sans regarder le clavier.",
+    "body": "EyesUp commence par voir comment vous tapez aujourd'hui, puis enseigne ce qui manque, quelques minutes par jour. Le clavier a l'ecran s'efface a mesure que vos doigts apprennent.",
+    "cta": "Demarrer le test de 3 minutes",
+    "start": "Appuyez sur Entree pour commencer",
+    "privacyLine": "Aucun compte. Vos progres restent sur cet appareil.",
+    "import": "Importer des progres depuis un fichier",
+    "featureCheckTitle": "Un test de 3 minutes d'abord",
+    "featureCheckBody": "Six questions rapides et deux courts tests de frappe decident ou commencer.",
+    "featureFadeTitle": "Un guide qui s'efface",
+    "featureFadeBody": "Chaque touche commence coloree par doigt et s'efface a mesure que vous la maitrisez.",
+    "featureSlowTitle": "Prevu pour la phase lente",
+    "featureSlowBody": "Si vous tapez deja en regardant, vous serez plus lent un temps. EyesUp montre quand taper a l'aveugle depasse votre ancienne vitesse.",
+    "footerOffline": "Fonctionne hors ligne apres cette premiere visite",
+    "footerPrivacy": "Comment nous traitons vos donnees",
+    "keyboardLabel": "Deux mains au repos sur un clavier colore par doigt"
   },
   "orient": {
     "title": "Orient",
@@ -26,7 +43,9 @@
     "oFinger": "O se tape avec l'annulaire droit.",
     "done": "Appuyez sur Entree quand vous etes pret",
     "next": "Appuyez sur Entree pour l'etape suivante",
-    "replay": "Revoir Orient"
+    "replay": "Revoir Orient",
+    "stepOf": "Etape {n} sur {total}",
+    "postureAlt": "Vue de profil : assis droit, ecran a hauteur des yeux, poignets a plat"
   },
   "questions": {
     "continue": "Appuyez sur Entree pour continuer",
@@ -93,7 +112,9 @@
     "done": "Termine — retour a Aujourd'hui",
     "wpm": "MPM",
     "accuracy": "Precision",
-    "slowest": "Touche la plus lente"
+    "slowest": "Touche la plus lente",
+    "notStarted": "Pas encore de session. Commencez depuis Aujourd'hui.",
+    "backToToday": "Retour a Aujourd'hui"
   },
   "progress": {
     "title": "Progres",
@@ -167,6 +188,12 @@
   },
   "a11y": {
     "keyboard": "Clavier a l'ecran",
-    "typingSurface": "Texte d'exercice"
+    "typingSurface": "Texte d'exercice",
+    "handsRest": "Mains au repos sur la rangee d'accueil, index sur F et J",
+    "handsReach": "Doigt qui atteint la touche cible depuis sa touche d'accueil",
+    "crossoverChart": "Graphique de la vitesse a l'aveugle contre la base du premier jour",
+    "heatmap": "Carte de chaleur du clavier par confiance",
+    "crossoverReachedLabel": "Depasse",
+    "reachArrow": "↓"
   }
 }

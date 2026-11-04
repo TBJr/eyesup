@@ -18,6 +18,8 @@ pnpm desktop:dev          # Vite + Tauri window (devUrl → localhost:5173)
 pnpm build:desktop        # production web build, then tauri build
 ```
 
+If the desktop window is empty or stuck on “Loading…”, confirm Vite is serving on port 5173 (Tauri’s `devUrl`). Open `http://localhost:5173/#/welcome` in a browser to check the web shell independently.
+
 Or from this package:
 
 ```bash

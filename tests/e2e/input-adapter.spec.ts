@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test('onboarding is keyboard-operable through questions', async ({ page }) => {
   await page.goto('/#/welcome');
-  await expect(page.getByRole('heading', { name: 'EyesUp' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: /Type without looking|Tapez sans regarder/i }),
+  ).toBeVisible();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Orient' })).toBeVisible();
   for (let i = 0; i < 6; i += 1) {

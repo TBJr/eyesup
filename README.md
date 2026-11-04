@@ -39,13 +39,16 @@ Requirements: Node.js 22 LTS, pnpm 9 or later. For the desktop app, also Rust (s
 
 ```bash
 pnpm install
-pnpm dev                       # web app at http://localhost:5173
+pnpm dev                       # web app at http://localhost:5173/#/welcome
 pnpm test                      # engine unit tests
 pnpm test:e2e                  # Playwright in Chromium, Firefox and WebKit
-pnpm desktop:dev                  # desktop app in a native window (needs Rust)
+pnpm test:e2e:subpath          # same smoke against a /eyesup/app/ production preview (Pages)
+pnpm desktop:dev               # desktop window (needs Rust + Vite on :5173; empty window → check the dev server)
 pnpm beta-report fixtures/beta-exports  # Gate B / Gate C support metrics
 node scripts/validate-layouts.mjs # check every layout file
 ```
+
+On GitHub Pages the learning app lives under **`/eyesup/app/`** (linked from the site home as “Open the web app”). Opening only the repo root without `/app/` will not load the shell.
 
 ## Beta and gates
 
@@ -69,6 +72,7 @@ node scripts/validate-layouts.mjs # check every layout file
 | [Privacy](PRIVACY.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) | |
 | [Product plan and Scope of Work](docs/spec/) | Vision, learning method, curriculum, architecture, deliverables and acceptance |
 | [Design snapshots](docs/design/) | Screens, wireframes, illustrations and tokens |
+| [Design fidelity checklist](docs/design/FIDELITY-CHECKLIST.md) | Side-by-side accept of screens 01–15 vs PNGs |
 
 ## Contributing
 

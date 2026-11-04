@@ -4,6 +4,16 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Fixed
+
+- Caps Lock shows as “Caps” with smaller type on wide keys, so the label fits on the Welcome keyboard.
+- Dark mode is easier to read: keyboard finger fills stay on dark key caps, the progress heatmap uses a dark blue scale, practice text uses the untyped ink colour, and primary buttons keep AA contrast on the dark accent.
+- Startup always shows loading, an error with retry, or Welcome instead of a blank dark page; empty links and Practice without a profile no longer leave an empty shell; fonts resolve under the `/eyesup/app/` Pages path.
+
+### Changed
+
+- Interface screens now follow the design snapshots: Welcome hero with zone keyboard and hands, Orient with posture and reach, Progress heatmap on the keyboard plus crossover chart, and shared shell components (logo, cards, headers).
+
 ### Added
 
 - Desktop first-launch import screen (`#/desktop-import`) for web JSON exports (EU-043).

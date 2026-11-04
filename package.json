@@ -16,6 +16,7 @@
     "pretest": "node scripts/patch-vitest-rpc-timeout.mjs",
     "test": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:subpath": "EYESUP_BASE_PATH=/eyesup/app/ pnpm --filter @eyesup/web build && EYESUP_BASE_PATH=/eyesup/app/ playwright test -c playwright.subpath.config.ts",
     "size": "node scripts/size-check.mjs",
     "tokens": "node scripts/build-tokens.mjs",
     "validate-layouts": "node scripts/validate-layouts.mjs packages/layouts",

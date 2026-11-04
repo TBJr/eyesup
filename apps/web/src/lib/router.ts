@@ -21,25 +21,28 @@ const DESTINATIONS: Route[] = [
   'settings',
 ];
 
+const KNOWN: Route[] = [
+  'welcome',
+  'orient',
+  'questions',
+  'probe-a',
+  'probe-b',
+  'result',
+  'today',
+  'practice',
+  'progress',
+  'library',
+  'settings',
+  'device',
+  'desktop-import',
+];
+
 export function parseHash(hash: string): Route {
   const raw = hash.replace(/^#\/?/, '').split('?')[0] ?? '';
-  const route = (raw || 'today') as Route;
-  const known: Route[] = [
-    'welcome',
-    'orient',
-    'questions',
-    'probe-a',
-    'probe-b',
-    'result',
-    'today',
-    'practice',
-    'progress',
-    'library',
-    'settings',
-    'device',
-    'desktop-import',
-  ];
-  return known.includes(route) ? route : 'today';
+  // Empty hash → welcome so first paint is never a destination without a profile.
+  if (!raw) return 'welcome';
+  const route = raw as Route;
+  return KNOWN.includes(route) ? route : 'welcome';
 }
 
 /** Touch-first device with no fine pointer / hover — soft keyboard hand-off (EU-041). */
