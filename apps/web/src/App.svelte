@@ -56,6 +56,18 @@
     type LinePlayState,
     type SessionUiState,
   } from './lib/sessionPlayer.js';
+  import {
+    ORIENT_DRILL_CODES,
+    advanceOrientKey,
+    canGoNext,
+    createOrientState,
+    drillProgress,
+    expectedOrientCode,
+    goBack,
+    goNext,
+    tryProgress,
+    type OrientState,
+  } from './lib/orientSteps.js';
   import { ensureMilestone, MILESTONE } from './lib/milestones.js';
   import {
     applyDesktopUpdate,
@@ -101,7 +113,7 @@
   // Onboarding
   let questionIndex = $state(0);
   let answers = $state<number[][]>([[], [], [], [], [], []]);
-  let orientStep = $state(0);
+  let orient = $state<OrientState>(createOrientState());
   let probeAChars = $state(0);
   let probeAErrors = $state(0);
   let probeAStarted = $state(0);
@@ -163,14 +175,77 @@
 
   const layout = $derived(LAYOUTS[profile?.layoutId ?? detectedLayout] ?? LAYOUTS['qwerty-us']!);
   const t = $derived(layout.language === 'fr' ? fr : en);
-  const orientSteps = $derived([
-    t.orient.posture,
-    t.orient.home,
-    t.orient.zones,
-    t.orient.eFinger,
-    t.orient.rFinger,
-    t.orient.oFinger,
-  ]);
+  const orientKeyTarget = $derived(expectedOrientCode(orient));
+  const orientDrill = $derived(drillProgress(orient));
+  const orientTry = $derived(tryProgress(orient));
+  const orientTurn = $derived.by(() => {
+    const code = orientKeyTarget;
+    const tips: Record<string, string> = {
+      Space: t.orient.tipSpace,
+      KeyF: t.orient.tipF,
+      KeyJ: t.orient.tipJ,
+      KeyD: t.orient.tipD,
+      KeyK: t.orient.tipK,
+      KeyS: t.orient.tipS,
+      KeyL: t.orient.tipL,
+      KeyE: t.orient.tipE,
+      KeyR: t.orient.tipR,
+      KeyO: t.orient.tipO,
+    };
+    const fingers: Record<string, string> = {
+      KeyF: t.orient.fingerLeftIndex,
+      KeyJ: t.orient.fingerRightIndex,
+      KeyD: t.orient.fingerLeftMiddle,
+      KeyK: t.orient.fingerRightMiddle,
+      KeyS: t.orient.fingerLeftRing,
+      KeyL: t.orient.fingerRightRing,
+      KeyE: t.orient.fingerLeftMiddle,
+      KeyR: t.orient.fingerLeftIndex,
+      KeyO: t.orient.fingerRightRing,
+    };
+    const chips: Record<string, string> = {
+      KeyF: t.orient.chipF.replace(/^F\s+/, ''),
+      KeyJ: t.orient.chipJ.replace(/^J\s+/, ''),
+      KeyD: t.orient.chipD.replace(/^D\s+/, ''),
+      KeyK: t.orient.chipK.replace(/^K\s+/, ''),
+      KeyS: t.orient.chipS.replace(/^S\s+/, ''),
+      KeyL: t.orient.chipL.replace(/^L\s+/, ''),
+      KeyE: t.orient.chipE.replace(/^E\s+/, ''),
+      KeyR: t.orient.chipR.replace(/^R\s+/, ''),
+      KeyO: t.orient.chipO.replace(/^O\s+/, ''),
+    };
+    const onTry = orient.navPhase === 3;
+    const prog = onTry ? orientTry : orientDrill;
+    const total = onTry ? orientTry.total : orientDrill.total;
+    const n = code ? prog.current : total;
+    const eyebrow = t.orient.yourTurn.replace('{n}', String(n)).replace('{total}', String(total));
+    const doneCodes = onTry ? orientTry.doneCodes : orientDrill.doneCodes;
+    const soFarChips = doneCodes.map((c) => ({
+      code: c,
+      label: chips[c] ?? c,
+    }));
+    const nextLabels = [t.orient.nextBumps, t.orient.nextZones, t.orient.nextTry, t.orient.nextTry];
+    const backLabels = [undefined, t.orient.backToSit, t.orient.backToBumps, t.orient.backToZones];
+    const idleTip =
+      orient.navPhase === 0
+        ? t.orient.readyForBumps
+        : orient.navPhase === 2
+          ? t.orient.readyForNext
+          : t.orient.readyForNext;
+    return {
+      eyebrow,
+      tip: code ? (tips[code] ?? '') : idleTip,
+      finger: code ? fingers[code] : undefined,
+      soFarChips,
+      nextLabel: nextLabels[orient.navPhase] ?? t.orient.nextTry,
+      nextEnabled: canGoNext(orient),
+      unlockHint:
+        orient.navPhase === 2 && orient.drillDone < ORIENT_DRILL_CODES.length
+          ? t.orient.nextUnlocks
+          : undefined,
+      backLabel: backLabels[orient.navPhase],
+    };
+  });
   const currentLine = $derived(sessionLines[lineIndex]);
   const historySessions = $derived([...recentSessions(progressSessions, 10)].reverse());
 
@@ -313,8 +388,17 @@
   }
 
   async function startFromWelcome() {
-    orientStep = 0;
+    orient = createOrientState();
     navigate('orient');
+  }
+
+  function onOrientNext() {
+    const result = goNext(orient);
+    if (result.kind === 'state') orient = result.state;
+  }
+
+  function onOrientBack() {
+    orient = goBack(orient);
   }
 
   function triggerWelcomeImport() {
@@ -403,9 +487,17 @@
       void startFromWelcome();
       return;
     }
-    if (route === 'orient' && e.key === 'Enter') {
-      if (orientStep < orientSteps.length - 1) orientStep += 1;
-      else navigate('questions');
+    if (route === 'orient') {
+      if (e.key === 'Enter' && canGoNext(orient)) {
+        onOrientNext();
+        return;
+      }
+      const result = advanceOrientKey(orient, e.code);
+      if (result.kind === 'state') orient = result.state;
+      else if (result.kind === 'done') {
+        orient = createOrientState();
+        navigate('questions');
+      }
       return;
     }
     if (route === 'questions') {
@@ -1135,7 +1227,18 @@
       <OrientScreen
         {t}
         {layout}
-        step={orientStep}
+        navPhase={orient.navPhase}
+        keyTarget={orientKeyTarget}
+        turnEyebrow={orientTurn.eyebrow}
+        turnFinger={orientTurn.finger}
+        turnTip={orientTurn.tip}
+        soFarChips={orientTurn.soFarChips}
+        nextLabel={orientTurn.nextLabel}
+        nextEnabled={orientTurn.nextEnabled}
+        unlockHint={orientTurn.unlockHint}
+        backLabel={orientTurn.backLabel}
+        onBack={onOrientBack}
+        onNext={onOrientNext}
         reducedMotion={profile?.accessProfile.reducedMotion ?? false}
       />
     {:else if route === 'questions'}
@@ -1414,7 +1517,7 @@
       <div class="library-hub">
       <h1>{t.library.title}</h1>
       <div class="library-actions">
-        <button type="button" onclick={() => { orientStep = 0; navigate('orient'); }}>{t.library.orient}</button>
+        <button type="button" onclick={() => { orient = createOrientState(); navigate('orient'); }}>{t.library.orient}</button>
         <button type="button" onclick={() => void startTimedTest()}>{t.library.timedTestStart}</button>
       </div>
       <section class="settings-group" aria-labelledby="own-text-heading">

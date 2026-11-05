@@ -6,6 +6,9 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ### Fixed
 
+- Orient hand tips now line up with the home-row keys, and each Orient step advances by pressing the taught keys (F then J on the bumps step) instead of Enter.
+- Hand guides overlay the keys (as in design) with clearer fingertip markers, so home-row fingers sit on A–F and J–;.
+- Orient matches the design lesson: four steps, a Your-turn card with So far chips, and a six-key drill (F J D K S L) before Try it.
 - Caps Lock shows as “Caps” with smaller type on wide keys, so the label fits on the Welcome keyboard.
 - Dark mode is easier to read: keyboard finger fills stay on dark key caps, the progress heatmap uses a dark blue scale, practice text uses the untyped ink colour, and primary buttons keep AA contrast on the dark accent.
 - Startup always shows loading, an error with retry, or Welcome instead of a blank dark page; empty links and Practice without a profile no longer leave an empty shell; fonts resolve under the `/eyesup/app/` Pages path.

@@ -11,7 +11,7 @@ Composition column: engineering shell vs design source (EU-050 / EU-051). **Sign
 | 03 | Probe A | `03-probe-a-sighted.png` | Passage chrome — done | Typing | Owner spot-check | |
 | 04 | Probe B | `04-probe-b-blind.png` | Home keys then hands only (keyboard hidden) — done | Typing | Owner spot-check | |
 | 05 | Result | `05-result-card.png` | Track card, layout, override — done | Enter | Owner spot-check | |
-| 06 | Orient | `06-orient.png` | Stepper, posture / zones / reach — done | Enter | Owner spot-check | |
+| 06 | Orient | `06-orient.png` | Step of 4, turn panel, So far chips, footer Next/Back — done | Space → F J D K S L → Next → E R O | Owner spot-check | |
 | 07 | Today | `07-today.png` | Streak, goal, crossover, start — done | Enter | Owner spot-check | |
 | 08 | Hands-ready | `08-hands-ready-gate.png` | Keyboard + hands rest (practice state-card) — done | F+J | Owner spot-check | |
 | 09 | Practice | `09-practice.png` | Typing surface + guided keyboard — done | Esc / Peek | Owner spot-check | |
