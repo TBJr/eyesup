@@ -38,4 +38,4 @@ The script must never print typed text or keystroke logs.
 
 ## After Gate B
 
-Record the go/no-go decision in `docs/agent/PROGRESS.md` (local) and open or continue the `phase-2` integration branch only on a go.
+Record the go/no-go decision in `docs/agent/PROGRESS.md`. On a go, continue engineering on short-lived feature branches from `main` (see `CONTRIBUTING.md`). Do not start Phase 4 until the product owner says so.

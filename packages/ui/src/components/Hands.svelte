@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { Layout, LayoutKey } from '@eyesup/engine';
+  import type { Layout } from '@eyesup/engine';
   import en from '../../strings/en.json';
+  import { keyboardKeyCenters } from '../keyboardGeometry';
 
   type HandsMode = 'rest' | 'reach';
 
@@ -23,7 +24,10 @@
   } = $props();
 
   const gap = 6;
-  const keyH = $derived(unit - gap);
+  /** Design-space pitch for palm anchors / viewBox (Keyboard.dc.html). */
+  const DESIGN_UNIT = 54;
+  const VIEW_W = 804;
+  const VIEW_H = 400;
 
   /** Home-row finger ids → layout key codes (QWERTY-like; Semicolon / KeyA from layout). */
   const HOME: Record<string, string> = {
@@ -77,33 +81,15 @@
     '1': 'var(--color-finger-index, #e69f00)',
   };
 
-  function centers(): Record<string, { x: number; y: number }> {
-    const byRow = new Map<number, LayoutKey[]>();
-    for (const key of layout.keys) {
-      const list = byRow.get(key.row) ?? [];
-      list.push(key);
-      byRow.set(key.row, list);
-    }
-    const out: Record<string, { x: number; y: number }> = {};
-    const rows = [...byRow.entries()].sort((a, b) => a[0] - b[0]);
-    let y = 24;
-    for (const [, keys] of rows) {
-      let x = 24;
-      // Offset rows slightly like a real keyboard
-      if (keys[0]?.row === 2) x += unit * 0.35;
-      if (keys[0]?.row === 3) x += unit * 0.85;
-      for (const key of keys) {
-        const w = (key.width ?? 1) * unit - gap;
-        out[key.code] = { x: x + w / 2, y: y + keyH / 2 };
-        x += (key.width ?? 1) * unit;
-      }
-      y += unit;
-    }
-    return out;
-  }
-
   const geom = $derived.by(() => {
-    const c = centers();
+    // Tip positions in design-space; offset into fixed 804 viewBox so palms stay aligned.
+    void unit;
+    const { centers: raw, width: stageW } = keyboardKeyCenters(layout.keys, DESIGN_UNIT, gap);
+    const ox = (VIEW_W - stageW) / 2;
+    const c: Record<string, { x: number; y: number }> = {};
+    for (const [code, pt] of Object.entries(raw)) {
+      c[code] = { x: pt.x + ox, y: pt.y };
+    }
     const tf = target ? FINGER_OF[target] : undefined;
     const reaching = mode === 'reach' && !!tf && tf !== 'T' && HOME[tf] !== target && !!c[target!];
     const fingers: Record<
@@ -126,7 +112,7 @@
         x2: tip.x,
         y2: tip.y,
         r: on ? 15 : 12,
-        sw: on ? 4 : 3,
+        sw: on ? 4.5 : 3.5,
         col: FINGER_COLOR[digit] ?? 'var(--color-finger-thumb, #8a8f98)',
         on,
       };
@@ -158,9 +144,18 @@
         gy: hy,
       };
     }
-    const W = 804;
-    const HH = 400;
-    return { fingers, reach, W, HH, showArrow: reducedMotion && reaching };
+    const space = c['Space'];
+    const thumbL = space ? { x: space.x - 33, y: space.y - 6 } : { x: 330, y: 246 };
+    const thumbR = space ? { x: space.x + 33, y: space.y - 6 } : { x: 393, y: 246 };
+    return {
+      fingers,
+      reach,
+      W: VIEW_W,
+      HH: VIEW_H,
+      showArrow: reducedMotion && reaching,
+      thumbL,
+      thumbR,
+    };
   });
 </script>
 
@@ -169,7 +164,7 @@
   viewBox={`0 0 ${geom.W} ${geom.HH}`}
   role="img"
   aria-label={label}
-  style={`width:100%;max-width:${geom.W}px;height:auto`}
+  style="width:100%;height:auto;display:block"
 >
   <defs>
     <marker
@@ -203,8 +198,8 @@
       {#each Object.values(geom.fingers) as f}
         <line x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2} stroke-width="31" />
       {/each}
-      <line x1="290" y1="292" x2="330" y2="246" stroke-width="35" />
-      <line x1="433" y1="292" x2="393" y2="246" stroke-width="35" />
+      <line x1="290" y1="292" x2={geom.thumbL.x} y2={geom.thumbL.y} stroke-width="35" />
+      <line x1="433" y1="292" x2={geom.thumbR.x} y2={geom.thumbR.y} stroke-width="35" />
     </g>
     <path
       d="M112 226 L300 214 Q326 250 312 300 L296 400 L176 400 L150 330 Q110 300 112 226 Z"
@@ -218,8 +213,8 @@
       {#each Object.values(geom.fingers) as f}
         <line x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2} stroke-width="27" />
       {/each}
-      <line x1="290" y1="292" x2="330" y2="246" stroke-width="31" />
-      <line x1="433" y1="292" x2="393" y2="246" stroke-width="31" />
+      <line x1="290" y1="292" x2={geom.thumbL.x} y2={geom.thumbL.y} stroke-width="31" />
+      <line x1="433" y1="292" x2={geom.thumbR.x} y2={geom.thumbR.y} stroke-width="31" />
     </g>
   </g>
   {#if geom.reach.op > 0 && !reducedMotion}
@@ -258,28 +253,28 @@
       cy={f.y2}
       r={f.r}
       fill={f.col}
-      fill-opacity={f.on ? 0.6 : 0.33}
+      fill-opacity={f.on ? 0.65 : 0.48}
       stroke={f.col}
       stroke-width={f.sw}
     />
   {/each}
   <circle
-    cx="330"
-    cy="246"
+    cx={geom.thumbL.x}
+    cy={geom.thumbL.y}
     r="12"
     fill="var(--color-finger-thumb, #8a8f98)"
-    fill-opacity="0.33"
+    fill-opacity="0.48"
     stroke="var(--color-finger-thumb, #8a8f98)"
-    stroke-width="3"
+    stroke-width="3.5"
   />
   <circle
-    cx="393"
-    cy="246"
+    cx={geom.thumbR.x}
+    cy={geom.thumbR.y}
     r="12"
     fill="var(--color-finger-thumb, #8a8f98)"
-    fill-opacity="0.33"
+    fill-opacity="0.48"
     stroke="var(--color-finger-thumb, #8a8f98)"
-    stroke-width="3"
+    stroke-width="3.5"
   />
 </svg>
 

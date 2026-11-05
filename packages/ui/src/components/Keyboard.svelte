@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Layout, LayoutKey } from '@eyesup/engine';
   import en from '../../strings/en.json';
+  import { keyboardKeyCenters } from '../keyboardGeometry';
   import Hands from './Hands.svelte';
 
   type Mode = 'zones' | 'levels' | 'heat' | 'plain';
@@ -38,6 +39,19 @@
 
   const keySize = $derived(unit - 6);
   const gap = 6;
+  const showHands = $derived(hands !== 'none');
+  /** Palm overhang below the key grid (design Hands viewBox 804×400). */
+  const palmPad = $derived.by(() => {
+    if (!showHands) return 0;
+    const geo = keyboardKeyCenters(layout.keys, unit, gap);
+    const handsH = (geo.width * 400) / 804;
+    return Math.max(0, Math.round(handsH - geo.height));
+  });
+  const stagePadStyle = $derived.by(() => {
+    if (!showHands) return undefined;
+    if (framed) return `padding: 24px 24px ${24 + palmPad}px 24px`;
+    return `padding-bottom: ${palmPad}px`;
+  });
 
   function fingerClass(finger: string): string {
     if (finger === 'T') return 'finger-thumb';
@@ -78,7 +92,7 @@
   });
 </script>
 
-<div class="stage" class:framed>
+<div class="stage" class:framed class:has-hands={showHands} style={stagePadStyle}>
   <div
     class="keyboard"
     class:peek
@@ -113,7 +127,7 @@
       </div>
     {/each}
   </div>
-  {#if hands !== 'none'}
+  {#if showHands}
     <div class="hands-wrap">
       <Hands
         {layout}
@@ -129,11 +143,13 @@
 
 <style>
   .stage {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0;
-    width: 100%;
+    width: max-content;
+    max-width: 100%;
   }
   .stage.framed {
     padding: 24px;
@@ -141,6 +157,7 @@
     background: var(--color-surface-card, #fff);
     border: 1px solid var(--color-surface-border, #e4e1da);
     overflow-x: auto;
+    overflow-y: visible;
   }
   .keyboard {
     display: flex;
@@ -260,10 +277,20 @@
     background: currentColor;
     opacity: 0.5;
   }
+  /* Overlay hands on keys (Keyboard.dc.html / design 01). */
   .hands-wrap {
-    margin-top: -12px;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 100%;
+    z-index: 1;
+    pointer-events: none;
     display: flex;
     justify-content: center;
+  }
+  .stage.framed .hands-wrap {
+    left: 24px;
+    top: 24px;
+    width: calc(100% - 48px);
   }
 </style>

@@ -19,10 +19,14 @@
   import fr from '@eyesup/ui/strings/fr.json';
   import CrossoverChart from '@eyesup/ui/CrossoverChart.svelte';
   import Hands from '@eyesup/ui/Hands.svelte';
-  import Posture from '@eyesup/ui/Posture.svelte';
   import Keyboard from './components/Keyboard.svelte';
   import TypingSurface from './components/TypingSurface.svelte';
   import WelcomeScreen from './screens/WelcomeScreen.svelte';
+  import OrientScreen from './screens/OrientScreen.svelte';
+  import QuestionsScreen from './screens/QuestionsScreen.svelte';
+  import ResultScreen from './screens/ResultScreen.svelte';
+  import TodayScreen from './screens/TodayScreen.svelte';
+  import HubShell from './screens/HubShell.svelte';
   import { applyDisplaySettings, DEFAULT_ACCESS } from './lib/display.js';
   import { getContentPackForLayout, LAYOUTS } from './lib/content.js';
   import {
@@ -52,6 +56,18 @@
     type LinePlayState,
     type SessionUiState,
   } from './lib/sessionPlayer.js';
+  import {
+    ORIENT_DRILL_CODES,
+    advanceOrientKey,
+    canGoNext,
+    createOrientState,
+    drillProgress,
+    expectedOrientCode,
+    goBack,
+    goNext,
+    tryProgress,
+    type OrientState,
+  } from './lib/orientSteps.js';
   import { ensureMilestone, MILESTONE } from './lib/milestones.js';
   import {
     applyDesktopUpdate,
@@ -97,7 +113,7 @@
   // Onboarding
   let questionIndex = $state(0);
   let answers = $state<number[][]>([[], [], [], [], [], []]);
-  let orientStep = $state(0);
+  let orient = $state<OrientState>(createOrientState());
   let probeAChars = $state(0);
   let probeAErrors = $state(0);
   let probeAStarted = $state(0);
@@ -159,14 +175,77 @@
 
   const layout = $derived(LAYOUTS[profile?.layoutId ?? detectedLayout] ?? LAYOUTS['qwerty-us']!);
   const t = $derived(layout.language === 'fr' ? fr : en);
-  const orientSteps = $derived([
-    t.orient.posture,
-    t.orient.home,
-    t.orient.zones,
-    t.orient.eFinger,
-    t.orient.rFinger,
-    t.orient.oFinger,
-  ]);
+  const orientKeyTarget = $derived(expectedOrientCode(orient));
+  const orientDrill = $derived(drillProgress(orient));
+  const orientTry = $derived(tryProgress(orient));
+  const orientTurn = $derived.by(() => {
+    const code = orientKeyTarget;
+    const tips: Record<string, string> = {
+      Space: t.orient.tipSpace,
+      KeyF: t.orient.tipF,
+      KeyJ: t.orient.tipJ,
+      KeyD: t.orient.tipD,
+      KeyK: t.orient.tipK,
+      KeyS: t.orient.tipS,
+      KeyL: t.orient.tipL,
+      KeyE: t.orient.tipE,
+      KeyR: t.orient.tipR,
+      KeyO: t.orient.tipO,
+    };
+    const fingers: Record<string, string> = {
+      KeyF: t.orient.fingerLeftIndex,
+      KeyJ: t.orient.fingerRightIndex,
+      KeyD: t.orient.fingerLeftMiddle,
+      KeyK: t.orient.fingerRightMiddle,
+      KeyS: t.orient.fingerLeftRing,
+      KeyL: t.orient.fingerRightRing,
+      KeyE: t.orient.fingerLeftMiddle,
+      KeyR: t.orient.fingerLeftIndex,
+      KeyO: t.orient.fingerRightRing,
+    };
+    const chips: Record<string, string> = {
+      KeyF: t.orient.chipF.replace(/^F\s+/, ''),
+      KeyJ: t.orient.chipJ.replace(/^J\s+/, ''),
+      KeyD: t.orient.chipD.replace(/^D\s+/, ''),
+      KeyK: t.orient.chipK.replace(/^K\s+/, ''),
+      KeyS: t.orient.chipS.replace(/^S\s+/, ''),
+      KeyL: t.orient.chipL.replace(/^L\s+/, ''),
+      KeyE: t.orient.chipE.replace(/^E\s+/, ''),
+      KeyR: t.orient.chipR.replace(/^R\s+/, ''),
+      KeyO: t.orient.chipO.replace(/^O\s+/, ''),
+    };
+    const onTry = orient.navPhase === 3;
+    const prog = onTry ? orientTry : orientDrill;
+    const total = onTry ? orientTry.total : orientDrill.total;
+    const n = code ? prog.current : total;
+    const eyebrow = t.orient.yourTurn.replace('{n}', String(n)).replace('{total}', String(total));
+    const doneCodes = onTry ? orientTry.doneCodes : orientDrill.doneCodes;
+    const soFarChips = doneCodes.map((c) => ({
+      code: c,
+      label: chips[c] ?? c,
+    }));
+    const nextLabels = [t.orient.nextBumps, t.orient.nextZones, t.orient.nextTry, t.orient.nextTry];
+    const backLabels = [undefined, t.orient.backToSit, t.orient.backToBumps, t.orient.backToZones];
+    const idleTip =
+      orient.navPhase === 0
+        ? t.orient.readyForBumps
+        : orient.navPhase === 2
+          ? t.orient.readyForNext
+          : t.orient.readyForNext;
+    return {
+      eyebrow,
+      tip: code ? (tips[code] ?? '') : idleTip,
+      finger: code ? fingers[code] : undefined,
+      soFarChips,
+      nextLabel: nextLabels[orient.navPhase] ?? t.orient.nextTry,
+      nextEnabled: canGoNext(orient),
+      unlockHint:
+        orient.navPhase === 2 && orient.drillDone < ORIENT_DRILL_CODES.length
+          ? t.orient.nextUnlocks
+          : undefined,
+      backLabel: backLabels[orient.navPhase],
+    };
+  });
   const currentLine = $derived(sessionLines[lineIndex]);
   const historySessions = $derived([...recentSessions(progressSessions, 10)].reverse());
 
@@ -309,8 +388,17 @@
   }
 
   async function startFromWelcome() {
-    orientStep = 0;
+    orient = createOrientState();
     navigate('orient');
+  }
+
+  function onOrientNext() {
+    const result = goNext(orient);
+    if (result.kind === 'state') orient = result.state;
+  }
+
+  function onOrientBack() {
+    orient = goBack(orient);
   }
 
   function triggerWelcomeImport() {
@@ -399,9 +487,17 @@
       void startFromWelcome();
       return;
     }
-    if (route === 'orient' && e.key === 'Enter') {
-      if (orientStep < orientSteps.length - 1) orientStep += 1;
-      else navigate('questions');
+    if (route === 'orient') {
+      if (e.key === 'Enter' && canGoNext(orient)) {
+        onOrientNext();
+        return;
+      }
+      const result = advanceOrientKey(orient, e.code);
+      if (result.kind === 'state') orient = result.state;
+      else if (result.kind === 'done') {
+        orient = createOrientState();
+        navigate('questions');
+      }
       return;
     }
     if (route === 'questions') {
@@ -1067,13 +1163,13 @@
     <button type="button" onclick={() => { ready = false; void bootFromStorage(); }}>{t.app.retry}</button>
   </main>
 {:else}
-  {#if isDestination(route) && profile}
+  {#if route === 'practice' && profile}
     <nav class="nav" aria-label={t.nav.label}>
-      <a href="#/today" aria-current={route === 'today' ? 'page' : undefined}>{t.nav.today}</a>
-      <a href="#/practice" aria-current={route === 'practice' ? 'page' : undefined}>{t.nav.practice}</a>
-      <a href="#/progress" aria-current={route === 'progress' ? 'page' : undefined}>{t.nav.progress}</a>
-      <a href="#/library" aria-current={route === 'library' ? 'page' : undefined}>{t.nav.library}</a>
-      <a href="#/settings" aria-current={route === 'settings' ? 'page' : undefined}>{t.nav.settings}</a>
+      <a href="#/today">{t.nav.today}</a>
+      <a href="#/practice" aria-current="page">{t.nav.practice}</a>
+      <a href="#/progress">{t.nav.progress}</a>
+      <a href="#/library">{t.nav.library}</a>
+      <a href="#/settings">{t.nav.settings}</a>
     </nav>
   {/if}
 
@@ -1128,49 +1224,56 @@
         onImport={triggerWelcomeImport}
       />
     {:else if route === 'orient'}
-      <div class="orient-screen">
-        <p class="eyebrow">
-          {t.orient.stepOf
-            .replace('{n}', String(orientStep + 1))
-            .replace('{total}', String(orientSteps.length))}
-        </p>
-        <h1>{t.orient.title}</h1>
-        <p>{orientSteps[orientStep]}</p>
-        {#if orientStep === 0}
-          <Posture label={t.orient.postureAlt} />
-        {:else if orientStep === 1}
-          <Keyboard {layout} mode="zones" hands="rest" target="KeyF" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
-        {:else if orientStep === 2}
-          <Keyboard {layout} mode="zones" hands="rest" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
-        {:else if orientStep === 3}
-          <Keyboard {layout} mode="zones" hands="reach" target="KeyE" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
-        {:else if orientStep === 4}
-          <Keyboard {layout} mode="zones" hands="reach" target="KeyR" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
-        {:else}
-          <Keyboard {layout} mode="zones" hands="reach" target="KeyO" numbers={true} framed={true} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
-        {/if}
-        <p class="hint">{orientStep >= orientSteps.length - 1 ? t.orient.done : t.orient.next}</p>
-      </div>
+      <OrientScreen
+        {t}
+        {layout}
+        navPhase={orient.navPhase}
+        keyTarget={orientKeyTarget}
+        turnEyebrow={orientTurn.eyebrow}
+        turnFinger={orientTurn.finger}
+        turnTip={orientTurn.tip}
+        soFarChips={orientTurn.soFarChips}
+        nextLabel={orientTurn.nextLabel}
+        nextEnabled={orientTurn.nextEnabled}
+        unlockHint={orientTurn.unlockHint}
+        backLabel={orientTurn.backLabel}
+        onBack={onOrientBack}
+        onNext={onOrientNext}
+        reducedMotion={profile?.accessProfile.reducedMotion ?? false}
+      />
     {:else if route === 'questions'}
       {@const q = questions[questionIndex]!}
-      <h1>{q.prompt}</h1>
-      <ol>
-        {#each q.options as opt, i}
-          <li class:selected={answers[questionIndex]!.includes(i + 1)}>
-            <span class="numkey">{i + 1}</span>
-            {opt}
-          </li>
-        {/each}
-      </ol>
-      <p class="hint">{q.multi ? t.questions.toggle : t.questions.continue}</p>
+      <QuestionsScreen
+        {t}
+        prompt={q.prompt}
+        options={q.options}
+        selected={answers[questionIndex]!}
+        questionIndex={questionIndex}
+        questionTotal={questions.length}
+        multi={q.multi === true}
+        onPick={(n) => {
+          const cur = answers[questionIndex]!;
+          if (q.multi) {
+            answers[questionIndex] = cur.includes(n)
+              ? cur.filter((x) => x !== n)
+              : [...cur, n];
+          } else {
+            answers[questionIndex] = [n];
+          }
+        }}
+      />
     {:else if route === 'probe-a'}
-      <h1>{t.probeA.title}</h1>
-      <p>{t.probeA.hint}</p>
-      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-      <pre class="probe" tabindex="0" onkeydown={onProbeAKey}>{t.probeA.passage}</pre>
+      <div class="probe-screen">
+        <p class="eyebrow">{t.probeA.eyebrow}</p>
+        <h1>{t.probeA.title}</h1>
+        <p>{t.probeA.hint}</p>
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <pre class="probe" tabindex="0" onkeydown={onProbeAKey}>{t.probeA.passage}</pre>
+      </div>
     {:else if route === 'probe-b'}
       <div class="probe-screen">
+        <p class="eyebrow">{t.probeB.eyebrow}</p>
         <h1>{t.probeB.title}</h1>
         <p>{probeBHome < 4 ? t.probeB.home : t.probeB.blind}</p>
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -1191,78 +1294,78 @@
         {/if}
       </div>
     {:else if route === 'result'}
-      <div class="result-card">
-        <h1>{t.result.title}</h1>
-        <p><strong>{placedTrack}</strong></p>
-        <p>{t.result.reason}: {placementReason}</p>
-        <p>{t.result.layout}: {detectedLayout}</p>
-        <p data-testid="placed-track">placed: {placedTrack}</p>
-        <p data-testid="active-track">active: {activeTrack}</p>
-        <label>
-          {t.result.override}
-          <select
-            value={activeTrack}
-            onchange={(e) => {
-              activeTrack = e.currentTarget.value as Track;
-              if (profile) {
-                profile = { ...profile, track: activeTrack, updatedAt: new Date().toISOString() };
-                void getStorage().putProfile(profile);
-              }
-            }}
-          >
-            {#each TRACK_OPTIONS as tr, i}
-              <option value={tr}>{i + 1}. {tr}</option>
-            {/each}
-          </select>
-        </label>
-        <p class="hint">{t.result.continue}</p>
-      </div>
+      <ResultScreen
+        {t}
+        placedTrack={placedTrack}
+        activeTrack={activeTrack}
+        placementReason={placementReason}
+        detectedLayout={detectedLayout}
+        trackOptions={[...TRACK_OPTIONS]}
+        onOverride={(tr) => {
+          activeTrack = tr;
+          if (profile) {
+            profile = { ...profile, track: activeTrack, updatedAt: new Date().toISOString() };
+            void getStorage().putProfile(profile);
+          }
+        }}
+        onLayoutChange={(id) => {
+          detectedLayout = id;
+        }}
+      />
     {:else if route === 'today'}
-      <h1>{t.today.title}</h1>
-      <p>{t.today.streak}: {profile?.streakDays ?? 0} {t.today.days}</p>
-      <p>{t.today.goal}: {profile?.goalWpm ?? 30} {t.practice.wpm}</p>
-      {#if profile?.track === 'retrain'}
-        <p role="note">{t.today.dipExplainer}</p>
-      {/if}
-      {#if crossover && baseline}
-        <section aria-labelledby="today-crossover">
-          <h2 id="today-crossover">{t.today.crossover}</h2>
-          {#if crossover.crossed}
-            <p>{t.today.crossoverReached}</p>
-          {:else}
-            <p>{t.today.crossover}: {crossover.gap.toFixed(1)} {t.practice.wpm}</p>
-            {#if crossover.projectedSessionsFromNow != null}
-              <p>{fillTemplate(t.today.crossoverProjected, crossover.projectedSessionsFromNow)}</p>
+      <TodayScreen
+        {t}
+        {layout}
+        streakDays={profile?.streakDays ?? 0}
+        goalWpm={profile?.goalWpm ?? 30}
+        track={profile?.track ?? placedTrack}
+        {levels}
+        reducedMotion={profile?.accessProfile.reducedMotion ?? false}
+      >
+        {#snippet extras()}
+          {#if profile?.track === 'retrain'}
+            <div class="panel"><p role="note">{t.today.dipExplainer}</p></div>
+          {/if}
+          {#if crossover && baseline}
+            <div class="panel" aria-labelledby="today-crossover">
+              <h2 id="today-crossover">{t.today.crossover}</h2>
+              {#if crossover.crossed}
+                <p>{t.today.crossoverReached}</p>
+              {:else}
+                <p>{t.today.crossover}: {crossover.gap.toFixed(1)} {t.practice.wpm}</p>
+                {#if crossover.projectedSessionsFromNow != null}
+                  <p>{fillTemplate(t.today.crossoverProjected, crossover.projectedSessionsFromNow)}</p>
+                {/if}
+              {/if}
+            </div>
+          {/if}
+          {#if profile}
+            {@const started = profile.commitWeekStartedAt}
+            {@const checkIns = profile.commitWeekCheckIns ?? 0}
+            {@const done = commitWeekComplete(checkIns)}
+            {#if started && !done}
+              <div class="panel" aria-labelledby="commit-week">
+                <h2 id="commit-week">{t.today.commitWeek}</h2>
+                <p>{fillTemplate(t.today.commitWeekProgress, checkIns)}</p>
+                <button type="button" onclick={() => void checkInCommitWeek()}>{t.today.commitWeekCheckIn}</button>
+              </div>
+            {:else if commitEligible && !started}
+              <div class="panel" aria-labelledby="commit-week">
+                <h2 id="commit-week">{t.today.commitWeek}</h2>
+                <p>{t.today.commitWeekOffer}</p>
+                <button type="button" onclick={() => void startCommitWeek()}>{t.today.commitWeekStart}</button>
+              </div>
             {/if}
           {/if}
-        </section>
-      {/if}
-      {#if profile}
-        {@const started = profile.commitWeekStartedAt}
-        {@const checkIns = profile.commitWeekCheckIns ?? 0}
-        {@const done = commitWeekComplete(checkIns)}
-        {#if started && !done}
-          <section aria-labelledby="commit-week">
-            <h2 id="commit-week">{t.today.commitWeek}</h2>
-            <p>{fillTemplate(t.today.commitWeekProgress, checkIns)}</p>
-            <button type="button" onclick={() => void checkInCommitWeek()}>{t.today.commitWeekCheckIn}</button>
-          </section>
-        {:else if commitEligible && !started}
-          <section aria-labelledby="commit-week">
-            <h2 id="commit-week">{t.today.commitWeek}</h2>
-            <p>{t.today.commitWeekOffer}</p>
-            <button type="button" onclick={() => void startCommitWeek()}>{t.today.commitWeekStart}</button>
-          </section>
-        {/if}
-      {/if}
-      <p class="hint">{t.today.start}</p>
-      {#if updateWaiting}
-        <aside class="update-banner" role="status">
-          <p>{t.update.ready}</p>
-          <button type="button" onclick={() => void installWaitingUpdate()}>{t.update.install}</button>
-          <button type="button" onclick={dismissWaitingUpdate}>{t.update.later}</button>
-        </aside>
-      {/if}
+          {#if updateWaiting}
+            <aside class="update-banner" role="status">
+              <p>{t.update.ready}</p>
+              <button type="button" onclick={() => void installWaitingUpdate()}>{t.update.install}</button>
+              <button type="button" onclick={dismissWaitingUpdate}>{t.update.later}</button>
+            </aside>
+          {/if}
+        {/snippet}
+      </TodayScreen>
     {:else if route === 'practice'}
       {#if isDesktop}
         <p>
@@ -1272,6 +1375,7 @@
         </p>
       {/if}
       {#if sessionUi === 'handsReady'}
+        <div class="state-card">
         <h1>{t.practice.handsReady}</h1>
         <Keyboard
           {layout}
@@ -1282,21 +1386,29 @@
           framed={true}
           reducedMotion={profile?.accessProfile.reducedMotion ?? false}
         />
+        </div>
       {:else if sessionUi === 'paused'}
-        <p role="status">{t.practice.paused}</p>
+        <p class="status-pill" role="status">{t.practice.paused}</p>
       {:else if sessionUi === 'lineResult'}
+        <div class="state-card">
         <h1>{t.practice.lineResult}</h1>
         <p>{t.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
         <p>{t.practice.accuracy}: {(lastLineAcc * 100).toFixed(0)}%</p>
         <p class="hint">{t.questions.continue}</p>
+        </div>
       {:else if sessionUi === 'breakCard'}
+        <div class="state-card">
         <h1>{t.practice.break}</h1>
         <p class="hint">{t.practice.breakSkip}</p>
+        </div>
       {:else if sessionUi === 'unlockCard'}
+        <div class="state-card">
         <h1>{t.practice.unlock}</h1>
         <Keyboard {layout} mode="zones" hands="reach" target="KeyK" {levels} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
         <p class="hint">{t.practice.unlockStart}</p>
+        </div>
       {:else if sessionUi === 'summary'}
+        <div class="state-card">
         <h1>{t.practice.summary}</h1>
         <p>{t.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
         <p class="hint">{t.practice.done}</p>
@@ -1307,12 +1419,13 @@
             <button type="button" onclick={dismissWaitingUpdate}>{t.update.later}</button>
           </aside>
         {/if}
+        </div>
       {:else if currentLine}
         {#if notices.includes('caps_lock')}
-          <p role="status">{t.practice.capsLock}</p>
+          <p class="status-pill warn" role="status">{t.practice.capsLock}</p>
         {/if}
         {#if inputState.peeking}
-          <p role="status">{t.practice.peek}</p>
+          <p class="status-pill" role="status">{t.practice.peek}</p>
         {/if}
         <!-- No live WPM while typing (required for foundations/retrain; line result still shows WPM). -->
         <TypingSurface text={currentLine.text} caret={linePlay.caret} errors={linePlay.errors} marked={linePlay.marked} />
@@ -1330,6 +1443,7 @@
         <button type="button" onclick={() => navigate('today')}>{t.practice.backToToday}</button>
       {/if}
     {:else if route === 'progress'}
+      <HubShell {t} route="progress" trackLine={profile ? t.today.trackLine.replace('{track}', profile.track) : undefined}>
       <h1>{t.progress.title}</h1>
       <p>{t.progress.eyesUpPoints}: {profile?.eyesUpPoints ?? 0}</p>
       <section aria-labelledby="heatmap-heading">
@@ -1397,11 +1511,13 @@
           {/if}
         </section>
       {/if}
+      </HubShell>
     {:else if route === 'library'}
+      <HubShell {t} route="library" trackLine={profile ? t.today.trackLine.replace('{track}', profile.track) : undefined}>
       <div class="library-hub">
       <h1>{t.library.title}</h1>
       <div class="library-actions">
-        <button type="button" onclick={() => { orientStep = 0; navigate('orient'); }}>{t.library.orient}</button>
+        <button type="button" onclick={() => { orient = createOrientState(); navigate('orient'); }}>{t.library.orient}</button>
         <button type="button" onclick={() => void startTimedTest()}>{t.library.timedTestStart}</button>
       </div>
       <section class="settings-group" aria-labelledby="own-text-heading">
@@ -1430,138 +1546,151 @@
         {/if}
       </section>
       </div>
+      </HubShell>
     {:else if route === 'settings'}
+      <HubShell {t} route="settings" trackLine={profile ? t.today.trackLine.replace('{track}', profile.track) : undefined}>
       <div class="settings-groups">
       <h1>{t.settings.title}</h1>
-      <div class="settings-group">
-      <label>
-        {t.settings.layout}
-        <select
-          value={profile?.layoutId}
-          onchange={(e) => {
-            if (!profile) return;
-            profile = { ...profile, layoutId: e.currentTarget.value, updatedAt: new Date().toISOString() };
-            void getStorage().putProfile(profile);
-          }}
-        >
-          <option value="qwerty-us">{t.layouts.qwertyUs}</option>
-          <option value="qwerty-uk">{t.layouts.qwertyUk}</option>
-          <option value="azerty-fr">{t.layouts.azertyFr}</option>
-        </select>
-      </label>
-      <label>
-        {t.settings.track}
-        <select
-          value={profile?.track}
-          onchange={(e) => void setTrack(e.currentTarget.value as Track)}
-        >
-          {#each TRACK_OPTIONS as tr}
-            <option value={tr}>{tr}</option>
-          {/each}
-        </select>
-      </label>
-      <p class="hint">{t.settings.trackKeepProgress}</p>
-      {#if baseline && profile && baseline.placedTrack !== profile.track}
-        <button type="button" onclick={() => void switchToPlacedTrack()}>{t.settings.switchPlaced}</button>
-      {/if}
-      <label>
-        {t.settings.goal}
-        <select
-          value={profile?.goalWpm}
-          onchange={(e) => void setGoalWpm(Number(e.currentTarget.value))}
-        >
-          {#each GOAL_OPTIONS as w}
-            <option value={w}>{w}</option>
-          {/each}
-        </select>
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={profile?.accessProfile.sound}
-          onchange={(e) => void setSound(e.currentTarget.checked)}
-        />
-        {t.settings.sound}
-      </label>
-      <p>{t.settings.textSize}: {profile?.accessProfile.textSizePx}</p>
-      <button type="button" onclick={() => setTextSize(-2)}>{t.controls.smaller}</button>
-      <button type="button" onclick={() => setTextSize(2)}>{t.controls.larger}</button>
-      <div>
-        <button type="button" onclick={() => setTheme('light')}>{t.settings.themeLight}</button>
-        <button type="button" onclick={() => setTheme('dark')}>{t.settings.themeDark}</button>
-        <button type="button" onclick={() => setTheme('high-contrast')}>{t.settings.themeHighContrast}</button>
+      <section class="settings-group" aria-labelledby="settings-keyboard">
+        <h2 id="settings-keyboard">{t.settings.groupKeyboard}</h2>
+        <label>
+          {t.settings.layout}
+          <select
+            value={profile?.layoutId}
+            onchange={(e) => {
+              if (!profile) return;
+              profile = { ...profile, layoutId: e.currentTarget.value, updatedAt: new Date().toISOString() };
+              void getStorage().putProfile(profile);
+            }}
+          >
+            <option value="qwerty-us">{t.layouts.qwertyUs}</option>
+            <option value="qwerty-uk">{t.layouts.qwertyUk}</option>
+            <option value="azerty-fr">{t.layouts.azertyFr}</option>
+          </select>
+        </label>
+      </section>
+      <section class="settings-group" aria-labelledby="settings-learning">
+        <h2 id="settings-learning">{t.settings.groupLearning}</h2>
+        <label>
+          {t.settings.track}
+          <select
+            value={profile?.track}
+            onchange={(e) => void setTrack(e.currentTarget.value as Track)}
+          >
+            {#each TRACK_OPTIONS as tr}
+              <option value={tr}>{tr}</option>
+            {/each}
+          </select>
+        </label>
+        <p class="hint">{t.settings.trackKeepProgress}</p>
+        {#if baseline && profile && baseline.placedTrack !== profile.track}
+          <button type="button" onclick={() => void switchToPlacedTrack()}>{t.settings.switchPlaced}</button>
+        {/if}
+        <label>
+          {t.settings.goal}
+          <select
+            value={profile?.goalWpm}
+            onchange={(e) => void setGoalWpm(Number(e.currentTarget.value))}
+          >
+            {#each GOAL_OPTIONS as w}
+              <option value={w}>{w}</option>
+            {/each}
+          </select>
+        </label>
+      </section>
+      <section class="settings-group" aria-labelledby="settings-access">
+        <h2 id="settings-access">{t.settings.groupAccess}</h2>
+        <label>
+          <input
+            type="checkbox"
+            checked={profile?.accessProfile.sound}
+            onchange={(e) => void setSound(e.currentTarget.checked)}
+          />
+          {t.settings.sound}
+        </label>
+        <p>{t.settings.textSize}: {profile?.accessProfile.textSizePx}</p>
+        <button type="button" onclick={() => setTextSize(-2)}>{t.controls.smaller}</button>
+        <button type="button" onclick={() => setTextSize(2)}>{t.controls.larger}</button>
+        <div>
+          <button type="button" onclick={() => setTheme('light')}>{t.settings.themeLight}</button>
+          <button type="button" onclick={() => setTheme('dark')}>{t.settings.themeDark}</button>
+          <button type="button" onclick={() => setTheme('high-contrast')}>{t.settings.themeHighContrast}</button>
+        </div>
+        <label>
+          <input
+            type="checkbox"
+            checked={profile?.accessProfile.reducedMotion}
+            onchange={(e) => {
+              if (!profile) return;
+              profile = {
+                ...profile,
+                accessProfile: { ...profile.accessProfile, reducedMotion: e.currentTarget.checked },
+                updatedAt: new Date().toISOString(),
+              };
+              applyDisplaySettings(profile.accessProfile);
+              void getStorage().putProfile(profile);
+            }}
+          />
+          {t.settings.reducedMotion}
+        </label>
+        <label>
+          {t.settings.fingerMap}
+          <select
+            value={profile?.accessProfile.fingerMap ?? 'default'}
+            onchange={(e) => {
+              const current = profile;
+              if (!current) return;
+              const { fingerMap: _omit, ...restAccess } = current.accessProfile;
+              const value = e.currentTarget.value;
+              const accessProfile =
+                value === 'default' ? restAccess : { ...restAccess, fingerMap: value };
+              const next = {
+                ...current,
+                accessProfile,
+                updatedAt: new Date().toISOString(),
+              };
+              profile = next;
+              applyDisplaySettings(next.accessProfile);
+              void getStorage().putProfile(next);
+            }}
+          >
+            <option value="default">{t.settings.fingerMapDefault}</option>
+            <option value="one-hand-left">{t.settings.fingerMapOneHandLeft}</option>
+            <option value="one-hand-right">{t.settings.fingerMapOneHandRight}</option>
+            <option value="reduced">{t.settings.fingerMapReduced}</option>
+          </select>
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={profile?.accessProfile.font === 'dyslexia'}
+            onchange={(e) => {
+              const current = profile;
+              if (!current) return;
+              const { font: _omit, ...restAccess } = current.accessProfile;
+              const accessProfile = e.currentTarget.checked
+                ? { ...restAccess, font: 'dyslexia' }
+                : restAccess;
+              const next = {
+                ...current,
+                accessProfile,
+                updatedAt: new Date().toISOString(),
+              };
+              profile = next;
+              applyDisplaySettings(next.accessProfile);
+              void getStorage().putProfile(next);
+            }}
+          />
+          {t.settings.dyslexiaFont}
+        </label>
+      </section>
+      <section class="settings-group" aria-labelledby="settings-data">
+        <h2 id="settings-data">{t.settings.groupData}</h2>
+        <button type="button" onclick={() => void exportData()}>{t.settings.export}</button>
+        <button type="button" onclick={() => void deleteAll()}>{t.settings.delete}</button>
+      </section>
       </div>
-      <label>
-        <input
-          type="checkbox"
-          checked={profile?.accessProfile.reducedMotion}
-          onchange={(e) => {
-            if (!profile) return;
-            profile = {
-              ...profile,
-              accessProfile: { ...profile.accessProfile, reducedMotion: e.currentTarget.checked },
-              updatedAt: new Date().toISOString(),
-            };
-            applyDisplaySettings(profile.accessProfile);
-            void getStorage().putProfile(profile);
-          }}
-        />
-        {t.settings.reducedMotion}
-      </label>
-      <label>
-        {t.settings.fingerMap}
-        <select
-          value={profile?.accessProfile.fingerMap ?? 'default'}
-          onchange={(e) => {
-            const current = profile;
-            if (!current) return;
-            const { fingerMap: _omit, ...restAccess } = current.accessProfile;
-            const value = e.currentTarget.value;
-            const accessProfile =
-              value === 'default' ? restAccess : { ...restAccess, fingerMap: value };
-            const next = {
-              ...current,
-              accessProfile,
-              updatedAt: new Date().toISOString(),
-            };
-            profile = next;
-            applyDisplaySettings(next.accessProfile);
-            void getStorage().putProfile(next);
-          }}
-        >
-          <option value="default">{t.settings.fingerMapDefault}</option>
-          <option value="one-hand-left">{t.settings.fingerMapOneHandLeft}</option>
-          <option value="one-hand-right">{t.settings.fingerMapOneHandRight}</option>
-          <option value="reduced">{t.settings.fingerMapReduced}</option>
-        </select>
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={profile?.accessProfile.font === 'dyslexia'}
-          onchange={(e) => {
-            const current = profile;
-            if (!current) return;
-            const { font: _omit, ...restAccess } = current.accessProfile;
-            const accessProfile = e.currentTarget.checked
-              ? { ...restAccess, font: 'dyslexia' }
-              : restAccess;
-            const next = {
-              ...current,
-              accessProfile,
-              updatedAt: new Date().toISOString(),
-            };
-            profile = next;
-            applyDisplaySettings(next.accessProfile);
-            void getStorage().putProfile(next);
-          }}
-        />
-        {t.settings.dyslexiaFont}
-      </label>
-      <button type="button" onclick={() => void exportData()}>{t.settings.export}</button>
-      <button type="button" onclick={() => void deleteAll()}>{t.settings.delete}</button>
-      </div>
-      </div>
+      </HubShell>
     {/if}
   </main>
 {/if}
@@ -1572,12 +1701,42 @@
     margin: 0 auto;
     padding: var(--space-6, 1.5rem);
   }
-  .page[data-route='welcome'] {
+  .page[data-route='welcome'],
+  .page[data-route='orient'],
+  .page[data-route='questions'],
+  .page[data-route='result'],
+  .page[data-route='today'],
+  .page[data-route='progress'],
+  .page[data-route='library'],
+  .page[data-route='settings'] {
     max-width: none;
     margin: 0;
     padding: 0;
   }
-  .orient-screen,
+  .page[data-route='practice'] .state-card {
+    padding: 1.5rem;
+    border-radius: var(--radius-panel, 20px);
+    background: var(--color-surface-card, #fff);
+    border: 1px solid var(--color-surface-border, #e4e1da);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 40rem;
+  }
+  .page[data-route='practice'] .status-pill {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--color-surface-muted, #f1efea);
+    border: 1px solid var(--color-surface-border, #e4e1da);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .page[data-route='practice'] .status-pill.warn {
+    background: color-mix(in srgb, var(--color-state-warning, #b7791f) 15%, transparent);
+    border-color: var(--color-state-warning, #b7791f);
+  }
   .probe-screen {
     display: flex;
     flex-direction: column;
@@ -1674,14 +1833,6 @@
   }
   .file-pick input {
     margin-top: 0.5rem;
-  }
-  .selected {
-    outline: 2px solid var(--color-accent, #2f6fed);
-  }
-  .numkey {
-    display: inline-block;
-    width: 1.5rem;
-    font-weight: 700;
   }
   .probe {
     padding: 1rem;

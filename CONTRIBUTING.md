@@ -20,7 +20,7 @@ Thanks for helping people learn to type without looking. This guide covers setup
 
 ## Branches and commits
 
-- Branch from the current phase branch (`phase-0`, `phase-1`, …), or from `main` when working outside a phase: `feat/eu-013-mastery-model`, `fix/short-name`, `docs/short-name`.
+- Integrate via **`main`**: open small feature branches from `main` (`feat/eu-013-mastery-model`, `fix/short-name`, `docs/short-name`). Historical `phase-*` branches remain for past integration PRs only.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat(engine): add pair confidence`, `fix(desktop): read AltGr on Linux`.
 - Keep pull requests small enough to review in 20 minutes.
 
