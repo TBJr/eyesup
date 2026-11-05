@@ -16,6 +16,6 @@ test('subpath build mounts the welcome screen (Pages base)', async ({ page }) =>
     page.getByRole('heading', { level: 1, name: /Type without looking/i }),
   ).toBeVisible();
   await expect(page.getByText(/No account\. Your progress stays on this device/i)).toBeVisible();
-  await expect(page.getByText('Press Enter to begin')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Start the 3-minute check/i })).toBeVisible();
   expect(failed, `script load failures: ${failed.join('; ')}`).toEqual([]);
 });
