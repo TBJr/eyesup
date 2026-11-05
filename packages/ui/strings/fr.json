@@ -35,12 +35,22 @@
   },
   "orient": {
     "title": "Orient",
+    "subtitle": "Environ 4 minutes, une fois",
     "posture": "Asseyez-vous droit, poignets souples, ecran a hauteur des yeux.",
+    "postureHeadline": "Asseyez-vous pour taper.",
     "home": "Posez les index sur les bosses de F et J.",
+    "homeHeadline": "Trouvez les bosses de F et J.",
     "zones": "Chaque doigt reste dans sa zone de couleur.",
+    "zonesHeadline": "Chaque doigt a ses propres touches.",
+    "zonesBody": "Meme couleur, meme doigt. Les majeurs ne pressent que les touches bleues ; les index couvrent deux colonnes chacun.",
     "eFinger": "E se tape avec le majeur gauche.",
     "rFinger": "R se tape avec l'index gauche.",
     "oFinger": "O se tape avec l'annulaire droit.",
+    "tryHeadline": "Essayez sans regarder le clavier.",
+    "navSit": "Position",
+    "navBumps": "Les bosses",
+    "navZones": "Zones des doigts",
+    "navTry": "Essayez",
     "done": "Appuyez sur Entree quand vous etes pret",
     "next": "Appuyez sur Entree pour l'etape suivante",
     "replay": "Revoir Orient",
@@ -48,16 +58,23 @@
     "postureAlt": "Vue de profil : assis droit, ecran a hauteur des yeux, poignets a plat"
   },
   "questions": {
+    "eyebrow": "Votre frappe actuelle",
+    "of": "Question {n} sur {total}",
     "continue": "Appuyez sur Entree pour continuer",
-    "toggle": "Les chiffres basculent ; Entree continue"
+    "continueCta": "Continuer",
+    "toggle": "Les chiffres basculent ; Entree continue",
+    "hintKeys": "Appuyez sur 1–4, puis Entree",
+    "back": "Retour"
   },
   "probeA": {
     "title": "Tapez normalement pendant 45 secondes",
+    "eyebrow": "Test de frappe 1",
     "hint": "Regardez l'ecran. Tapez comme d'habitude.",
     "passage": "le renard brun agile saute par dessus le chien paresseux et continue avec des mains stables sur la rangee de base aujourd hui"
   },
   "probeB": {
     "title": "Position de base et controle a l'aveugle",
+    "eyebrow": "Test de frappe 2",
     "home": "Appuyez sur la touche du doigt surligne.",
     "blind": "Clavier cache — tapez au feeling.",
     "homeLabel": "Controle de base",
@@ -74,19 +91,29 @@
   },
   "result": {
     "title": "Votre parcours de depart",
+    "eyebrow": "Votre point de depart",
+    "headline": "Nous vous placons sur {track}.",
     "reason": "Pourquoi ce parcours",
     "layout": "Disposition du clavier",
     "changeLayout": "Changer de disposition",
     "override": "Choisir un autre parcours",
-    "continue": "Appuyez sur Entree pour continuer"
+    "continue": "Appuyez sur Entree pour continuer",
+    "startOrient": "Demarrer Orient · 4 min",
+    "startElsewhere": "Commencer ailleurs"
   },
   "today": {
     "title": "Aujourd'hui",
+    "sessionLabel": "Session du jour",
+    "startCta": "Demarrer la session",
     "start": "Appuyez sur Entree pour la session du jour",
+    "handsHint": "Posez d'abord F et J ; les presser ensemble commence.",
     "streak": "Serie",
     "days": "jours",
+    "streakHint": "Un jour de repos par semaine ne casse jamais la serie",
     "nextKeys": "Prochaines touches",
     "goal": "Objectif",
+    "guideTitle": "Votre guide clavier maintenant",
+    "guidePeek": "Maintenez Ctrl en session pour tout revoir.",
     "crossover": "Ecart de croisement",
     "crossoverProjected": "Croisement estime dans environ {n} sessions",
     "crossoverReached": "La vitesse a l'aveugle a depasse votre vitesse du premier jour",
@@ -95,7 +122,8 @@
     "commitWeekOffer": "Toutes les lettres a 25 MPM a l'aveugle — commencer 7 jours yeux leves ?",
     "commitWeekStart": "Demarrer la semaine",
     "commitWeekCheckIn": "Pointer pour aujourd'hui",
-    "commitWeekProgress": "Semaine d'engagement jour {n} sur 7"
+    "commitWeekProgress": "Semaine d'engagement jour {n} sur 7",
+    "trackLine": "Parcours {track}"
   },
   "practice": {
     "handsReady": "Posez sur F et J, puis appuyez les deux ensemble",
@@ -142,6 +170,10 @@
   },
   "settings": {
     "title": "Reglages",
+    "groupKeyboard": "Clavier",
+    "groupLearning": "Apprentissage",
+    "groupAccess": "Acces et affichage",
+    "groupData": "Vos donnees",
     "layout": "Disposition",
     "track": "Parcours",
     "trackKeepProgress": "La progression des touches est gardee si le parcours change",

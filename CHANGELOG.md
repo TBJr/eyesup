@@ -12,7 +12,8 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ### Changed
 
-- Interface screens now follow the design snapshots: Welcome hero with zone keyboard and hands, Orient with posture and reach, Progress heatmap on the keyboard plus crossover chart, and shared shell components (logo, cards, headers).
+- Onboarding and daily hubs match the design more closely: Orient stepper with posture and reach, Questions and Result cards, Today and Progress/Library/Settings in a side-nav hub, practice peek/Caps/break cards, and grouped Settings sections (EU-050 / EU-051).
+- Interface screens now follow the design snapshots: Welcome hero with zone keyboard and hands, Progress heatmap on the keyboard plus crossover chart, and shared shell components (logo, cards, headers).
 
 ### Added
 
