@@ -1,0 +1,27 @@
+# Stub Flatpak manifest for EyesUp (app.eyesup.desktop).
+# Not buildable yet: fill sources URL/sha256 from a released .deb and confirm
+# GNOME runtime with the product owner before Flathub submission.
+# See README.md in this directory and https://v2.tauri.app/distribute/flatpak/
+
+id: app.eyesup.desktop
+runtime: org.gnome.Platform
+runtime-version: '46'
+sdk: org.gnome.Sdk
+command: eyesup
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --share=ipc
+modules:
+  - name: eyesup
+    buildsystem: simple
+    sources:
+      - type: file
+        # Replace with the GitHub Release .deb URL and sha256 after a tagged build.
+        url: REPLACE_WITH_DEB_URL
+        sha256: REPLACE_WITH_DEB_SHA256
+    build-commands:
+      - ar -x *.deb
+      - tar -xf data.tar.*
+      - cp -r usr /app/

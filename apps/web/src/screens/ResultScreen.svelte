@@ -23,6 +23,12 @@
     onOverride: (track: Track) => void;
     onLayoutChange: (layoutId: string) => void;
   } = $props();
+
+  const ctaLabel = $derived(
+    activeTrack === 'foundations' || activeTrack === 'retrain'
+      ? t.result.startOrient
+      : t.result.startPractice,
+  );
 </script>
 
 <div class="result" data-testid="result-screen">
@@ -64,7 +70,7 @@
         </div>
       </div>
       <div class="cta">
-        <Button kbd="Enter">{t.result.startOrient}</Button>
+        <Button kbd="Enter">{ctaLabel}</Button>
       </div>
       <p class="hint">{t.result.continue}</p>
     </div>

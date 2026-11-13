@@ -100,12 +100,44 @@
     "continueCta": "Continue",
     "toggle": "Number keys toggle; Enter continues",
     "hintKeys": "Press 1–4, then Enter",
-    "back": "Back"
+    "back": "Back",
+    "q1Prompt": "What do you type most days?",
+    "q1o1": "Writing and email",
+    "q1o2": "Code",
+    "q1o3": "Numbers and data",
+    "q1o4": "A mix",
+    "q2Prompt": "How do you type today?",
+    "q2o1": "One or two fingers, I look at every key",
+    "q2o2": "Several fingers, I look most of the time",
+    "q2o3": "I touch type letters but look for numbers and symbols",
+    "q2o4": "I touch type everything",
+    "q3Prompt": "Have you learned touch typing before?",
+    "q3o1": "Never",
+    "q3o2": "A little",
+    "q3o3": "A full course",
+    "q3o4": "I teach it",
+    "q4Prompt": "How many minutes a day can you practise?",
+    "q4o1": "5",
+    "q4o2": "12",
+    "q4o3": "20",
+    "q5Prompt": "What keyboard do you use most?",
+    "q5o1": "Laptop",
+    "q5o2": "Full-size",
+    "q5o3": "Split / ergonomic",
+    "q5o4": "Not sure",
+    "q6Prompt": "Any access needs? (toggle with number keys)",
+    "q6o1": "Larger text",
+    "q6o2": "High contrast",
+    "q6o3": "Reduced motion",
+    "q6o4": "One-hand left",
+    "q6o5": "One-hand right",
+    "q6o6": "Quiet (no sound)"
   },
   "probeA": {
     "title": "Type normally for 45 seconds",
     "eyebrow": "Typing check 1",
     "hint": "Look at the screen. Type as you usually do.",
+    "countdown": "{seconds}s left",
     "passage": "the quick brown fox jumps over the lazy dog and keeps going with steady hands on the home row today"
   },
   "probeB": {
@@ -114,6 +146,7 @@
     "home": "Press the key for the highlighted finger.",
     "blind": "Keyboard hidden — type by feel.",
     "homeLabel": "Home check",
+    "countdown": "{seconds}s left",
     "passage": "blind typing line with common words here for the probe"
   },
   "layouts": {
@@ -136,6 +169,7 @@
     "override": "Choose a different track",
     "continue": "Press Enter to continue",
     "startOrient": "Start Orient · 4 min",
+    "startPractice": "Start practice",
     "startElsewhere": "Start somewhere else"
   },
   "today": {
@@ -174,12 +208,25 @@
     "unlockStart": "Press Enter to practise",
     "break": "Time for a short stretch",
     "breakSkip": "Press Enter to skip",
+    "breakCountdown": "{seconds}s left — or press Enter to skip",
     "done": "Done — back to Today",
     "wpm": "WPM",
     "accuracy": "Accuracy",
     "slowest": "Slowest key",
+    "slowestPair": "Slowest pair",
+    "guideChange": "{key} guide L{from}→L{to}",
+    "eyesUpEarned": "Eyes-up points this session",
+    "noGuideChanges": "No guide changes this session",
     "notStarted": "No practice session yet. Start from Today.",
-    "backToToday": "Back to Today"
+    "backToToday": "Back to Today",
+    "timedRemaining": "{seconds}s left",
+    "blindCountdown": "Blind check · {seconds}s",
+    "metronomeHint": "Match the pulse",
+    "unlockReplay": "Press Tab to replay · Enter to continue",
+    "ghostRace": "Ghost race",
+    "ghostRaceStart": "Race your best run",
+    "coderPractice": "Code snippets",
+    "numbersPractice": "Number drills"
   },
   "progress": {
     "title": "Progress",
@@ -190,7 +237,9 @@
     "noSessions": "No sessions yet",
     "noMilestones": "Milestones appear as you practise",
     "crossover": "Crossover",
-    "eyesUpPoints": "Eyes-up points"
+    "eyesUpPoints": "Eyes-up points",
+    "sessionLine": "{wpm} {wpmLabel} · {accuracy}%",
+    "milestoneLine": "{id} — {date}"
   },
   "library": {
     "title": "Library",
@@ -203,7 +252,15 @@
     "ownTextDelete": "Delete",
     "ownTextEmpty": "No saved texts yet",
     "timedTest": "Timed test",
-    "timedTestStart": "Start a one-minute test"
+    "timedTestStart": "Start a one-minute test",
+    "coder": "Code snippets",
+    "coderStart": "Practise a code snippet",
+    "coderHint": "Brackets and real snippets from your Coder overlay",
+    "numbers": "Number drills",
+    "numbersStart": "Practise the number row",
+    "numbersHint": "Digit drills from your Numbers overlay",
+    "ghostRace": "Ghost race",
+    "ghostRaceHint": "Race your best run on the same text"
   },
   "settings": {
     "title": "Settings",
@@ -211,6 +268,10 @@
     "groupLearning": "Learning",
     "groupAccess": "Access and display",
     "groupData": "Your data",
+    "reminder": "Daily reminder",
+    "reminderOff": "Off",
+    "reminderTime": "Reminder time",
+    "reminderHint": "Optional. Desktop only. None on rest days.",
     "layout": "Layout",
     "track": "Track",
     "trackKeepProgress": "Key progress is kept when the track changes",
@@ -234,6 +295,10 @@
     "fingerMapOneHandRight": "One hand (right)",
     "fingerMapReduced": "Fewer fingers",
     "dyslexiaFont": "Dyslexia-friendly spacing"
+  },
+  "reminder": {
+    "title": "Time for EyesUp",
+    "body": "A few minutes of practice keeps your streak."
   },
   "device": {
     "title": "EyesUp needs a keyboard",

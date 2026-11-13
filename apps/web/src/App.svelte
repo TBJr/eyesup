@@ -1,18 +1,25 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import {
+    BLIND_CHECK_DURATION_SEC,
     BREAK_AFTER_CONTINUOUS_MINUTES,
+    BREAK_DURATION_SEC,
     canStartCommitWeek,
     commitWeekComplete,
     createSeededRandom,
     generateLine,
     keyConfidence,
+    pairConfidence,
+    createPairStat,
     netWpm,
     accuracy as metricAccuracy,
     planSession,
+    tryUnlockNextGroup,
     unlockedTypingChars,
-    type GuideLevel,
+    type KeyStat,
+    type Learner,
     type Line,
+    type PairStat,
     type Track,
   } from '@eyesup/engine';
   import en from '@eyesup/ui/strings/en.json';
@@ -29,10 +36,27 @@
   import HubShell from './screens/HubShell.svelte';
   import { applyDisplaySettings, DEFAULT_ACCESS } from './lib/display.js';
   import { getContentPackForLayout, LAYOUTS } from './lib/content.js';
+  import { layoutWithFingerMap } from './lib/fingerMap.js';
+  import { seedKeysForPlacement } from './lib/placementSeed.js';
   import {
+    playCorrect,
+    playError,
+    playLineComplete,
+    playUnlock,
+  } from './lib/practiceSound.js';
+  import { applyPracticeDay } from './lib/streak.js';
+  import {
+    applyEndSessionFade,
+    applyKeystrokeScores,
     buildSessionKeysAndPairs,
-    bumpKeyStatAfterLine,
+    codeForChar,
+    createMasteryApplyState,
+    keyStatFromRecord,
+    pairStatFromRecord,
+    seedUnlockedGroupKeys,
+    unlockTargetCode,
     unlockedGroupCountForTrack,
+    type MasteryApplyState,
   } from './lib/learnerFromStorage.js';
   import {
     TRACK_OPTIONS,
@@ -73,6 +97,17 @@
     applyDesktopUpdate,
     startDesktopUpdateWatcher,
   } from './lib/desktopUpdate.js';
+  import { isCoderEnabled, linesFromRandomSnippet } from './lib/coderOverlay.js';
+  import { generateNumberDrillLines, isNumbersEnabled } from './lib/numbersOverlay.js';
+  import {
+    bestGhostFor,
+    buildGhostFromCarets,
+    ghostCaretAt,
+    rememberBestGhost,
+    type GhostTimeline,
+  } from './lib/ghostRace.js';
+  import { formatReminderTime, parseReminderTime, shouldNotifyToday } from './lib/reminders.js';
+  import { showReminderNotification } from './lib/desktopReminders.js';
   import { createStorageAdapter } from './storage/createStorageAdapter.js';
   import { detectIsTauri, invokeCmd } from './storage/tauriBridge.js';
   import {
@@ -82,6 +117,7 @@
     type KeyStatRecord,
     type MilestoneRecord,
     type OwnTextRecord,
+    type PairStatRecord,
     type ProfileRecord,
     type SessionRecord,
     type StorageAdapter,
@@ -117,14 +153,26 @@
   let probeAChars = $state(0);
   let probeAErrors = $state(0);
   let probeAStarted = $state(0);
+  let probeACaret = $state(0);
+  let probeARemainingSec = $state(0);
+  let probeADone = $state(false);
   let probeBHome = $state(0);
+  let probeBPhase = $state<'home' | 'b2' | 'b3'>('home');
+  let probeBCaret = $state(0);
   let probeBBlindCorrect = $state(0);
   let probeBBlindTotal = $state(0);
   let probeB3Wpm = $state(0);
+  let probeB3Started = $state(0);
+  let probeB3RemainingSec = $state(0);
+  let probeBDone = $state(false);
+  let probeBAccurateCodes = $state<string[]>([]);
+  let probeErrors = $state(new Set<number>());
   let placementReason = $state('');
   let placedTrack = $state<Track>('foundations');
   let activeTrack = $state<Track>('foundations');
   let detectedLayout = $state('qwerty-us');
+
+  const PROBE_B2_TEXT = 'asdfjkl;asdfjkl;asdf';
 
   // Practice
   let sessionLines = $state<Line[]>([]);
@@ -134,13 +182,34 @@
   let linePlay = $state<LinePlayState>(createLinePlay());
   let lastLineWpm = $state(0);
   let lastLineAcc = $state(1);
+  let lastLineSlowest = $state('');
+  let lastLineGuideChanges = $state<Array<{ code: string; from: number; to: number }>>([]);
+  let sessionGuideChanges = $state<Array<{ code: string; from: number; to: number }>>([]);
+  let sessionSlowestPair = $state('');
   let continuousMs = $state(0);
   let sessionActiveMs = $state(0);
   let notices = $state<string[]>([]);
   let levels = $state<Record<string, number>>({});
   let timedTestMode = $state(false);
   let timedTestEndsAt = $state(0);
+  let timedRemainingSec = $state(0);
   let sessionKeyRecords = $state<KeyStatRecord[]>([]);
+  let mastery = $state<MasteryApplyState | null>(null);
+  let lineGuideSnapshot = $state<Record<string, number>>({});
+  let unlockTarget = $state('KeyF');
+  /** When true, Enter on unlock card goes to summary (end-of-session unlock). */
+  let unlockLeadsToSummary = $state(false);
+  let sessionEyesUpDelta = $state(0);
+  let blindEndsAt = $state(0);
+  let blindRemainingSec = $state(0);
+  let breakEndsAt = $state(0);
+  let breakRemainingSec = $state(0);
+  let unlockReachNonce = $state(0);
+  let metronomeOn = $state(false);
+  let ghostSamples = $state<Array<{ t: number; caret: number }>>([]);
+  let ghostCaret = $state(-1);
+  let activeGhost = $state<GhostTimeline | undefined>(undefined);
+  let lastReminderMinute = $state('');
 
   // Progress / library / today
   let progressKeys = $state<KeyStatRecord[]>([]);
@@ -152,29 +221,48 @@
   let crossover = $state<ReturnType<typeof crossoverFromBaseline>>(null);
   let commitEligible = $state(false);
 
-  const questions = [
-    { prompt: 'What do you type most days?', options: ['Writing and email', 'Code', 'Numbers and data', 'A mix'] },
+  const layout = $derived(
+    layoutWithFingerMap(
+      LAYOUTS[profile?.layoutId ?? detectedLayout] ?? LAYOUTS['qwerty-us']!,
+      profile?.accessProfile.fingerMap,
+    ),
+  );
+  const t = $derived(layout.language === 'fr' ? fr : en);
+  const soundOn = $derived(profile?.accessProfile.sound === true);
+  const questions = $derived([
     {
-      prompt: 'How do you type today?',
-      options: [
-        'One or two fingers, I look at every key',
-        'Several fingers, I look most of the time',
-        'I touch type letters but look for numbers and symbols',
-        'I touch type everything',
-      ],
+      prompt: t.questions.q1Prompt,
+      options: [t.questions.q1o1, t.questions.q1o2, t.questions.q1o3, t.questions.q1o4],
     },
-    { prompt: 'Have you learned touch typing before?', options: ['Never', 'A little', 'A full course', 'I teach it'] },
-    { prompt: 'How many minutes a day can you practise?', options: ['5', '12', '20'] },
-    { prompt: 'What keyboard do you use most?', options: ['Laptop', 'Full-size', 'Split / ergonomic', 'Not sure'] },
     {
-      prompt: 'Any access needs? (toggle with number keys)',
-      options: ['Larger text', 'High contrast', 'Reduced motion', 'One-hand left', 'One-hand right', 'Quiet (no sound)'],
+      prompt: t.questions.q2Prompt,
+      options: [t.questions.q2o1, t.questions.q2o2, t.questions.q2o3, t.questions.q2o4],
+    },
+    {
+      prompt: t.questions.q3Prompt,
+      options: [t.questions.q3o1, t.questions.q3o2, t.questions.q3o3, t.questions.q3o4],
+    },
+    {
+      prompt: t.questions.q4Prompt,
+      options: [t.questions.q4o1, t.questions.q4o2, t.questions.q4o3],
+    },
+    {
+      prompt: t.questions.q5Prompt,
+      options: [t.questions.q5o1, t.questions.q5o2, t.questions.q5o3, t.questions.q5o4],
+    },
+    {
+      prompt: t.questions.q6Prompt,
+      options: [
+        t.questions.q6o1,
+        t.questions.q6o2,
+        t.questions.q6o3,
+        t.questions.q6o4,
+        t.questions.q6o5,
+        t.questions.q6o6,
+      ],
       multi: true,
     },
-  ];
-
-  const layout = $derived(LAYOUTS[profile?.layoutId ?? detectedLayout] ?? LAYOUTS['qwerty-us']!);
-  const t = $derived(layout.language === 'fr' ? fr : en);
+  ]);
   const orientKeyTarget = $derived(expectedOrientCode(orient));
   const orientDrill = $derived(drillProgress(orient));
   const orientTry = $derived(tryProgress(orient));
@@ -247,6 +335,12 @@
     };
   });
   const currentLine = $derived(sessionLines[lineIndex]);
+  const expectedPracticeCode = $derived.by(() => {
+    if (!currentLine || sessionUi !== 'typing') return undefined;
+    const ch = currentLine.text[linePlay.caret];
+    if (ch == null) return undefined;
+    return codeForChar(layout, ch) ?? undefined;
+  });
   const historySessions = $derived([...recentSessions(progressSessions, 10)].reverse());
 
   $effect(() => {
@@ -262,6 +356,141 @@
         baseline = await getStorage().getBaseline();
       })();
     }
+  });
+
+  $effect(() => {
+    if (!timedTestMode || timedTestEndsAt <= 0) {
+      timedRemainingSec = 0;
+      return;
+    }
+    const tick = () => {
+      timedRemainingSec = Math.max(0, Math.ceil((timedTestEndsAt - performance.now()) / 1000));
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  });
+
+  $effect(() => {
+    if (sessionUi !== 'typing' || currentLine?.kind !== 'blind_check' || blindEndsAt <= 0) {
+      blindRemainingSec = 0;
+      return;
+    }
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((blindEndsAt - performance.now()) / 1000));
+      blindRemainingSec = left;
+      if (left <= 0 && sessionUi === 'typing') {
+        const elapsed = Math.max(1, performance.now() - (linePlay.startedAt || performance.now()));
+        lastLineWpm = netWpm(linePlay.caret, linePlay.errors.size, elapsed);
+        lastLineAcc = metricAccuracy(linePlay.correctFirst, Math.max(1, linePlay.totalKeys));
+        sessionActiveMs += elapsed;
+        continuousMs += elapsed;
+        blindEndsAt = 0;
+        sessionUi = 'lineResult';
+        void persistLine();
+      }
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  });
+
+  $effect(() => {
+    if (sessionUi !== 'breakCard' || breakEndsAt <= 0) {
+      breakRemainingSec = 0;
+      return;
+    }
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((breakEndsAt - performance.now()) / 1000));
+      breakRemainingSec = left;
+      if (left <= 0) {
+        continuousMs = 0;
+        breakEndsAt = 0;
+        sessionUi = 'typing';
+        linePlay = { ...createLinePlay(), startedAt: performance.now() };
+        armBlindIfNeeded();
+      }
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  });
+
+  // EU-047: poll desktop reminder once / 30s; once-per-minute gate via lastReminderMinute
+  $effect(() => {
+    if (route !== 'probe-a' || !probeAStarted || probeADone) {
+      if (route !== 'probe-a') probeARemainingSec = 0;
+      return;
+    }
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((45_000 - (performance.now() - probeAStarted)) / 1000));
+      probeARemainingSec = left;
+      if (left <= 0) finishProbeA();
+    };
+    tick();
+    const id = window.setInterval(tick, 200);
+    return () => window.clearInterval(id);
+  });
+
+  $effect(() => {
+    if (route !== 'probe-b' || probeBPhase !== 'b3' || !probeB3Started || probeBDone) {
+      if (route !== 'probe-b' || probeBPhase !== 'b3') probeB3RemainingSec = 0;
+      return;
+    }
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((20_000 - (performance.now() - probeB3Started)) / 1000));
+      probeB3RemainingSec = left;
+      if (left <= 0) finishProbeB3();
+    };
+    tick();
+    const id = window.setInterval(tick, 200);
+    return () => window.clearInterval(id);
+  });
+
+  $effect(() => {
+    if (!ready || !profile?.reminderTime || !isDesktop) return;
+    const id = window.setInterval(() => {
+      const now = new Date();
+      const key = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}T${now.getHours()}:${now.getMinutes()}`;
+      if (key === lastReminderMinute) return;
+      // Rest-day flag: App should pass true when the learner marked today as a rest day.
+      if (shouldNotifyToday(now, profile?.reminderTime, false)) {
+        lastReminderMinute = key;
+        void showReminderNotification(t.reminder.title, t.reminder.body);
+      }
+    }, 30_000);
+    return () => window.clearInterval(id);
+  });
+
+  function resetGhostForCurrentLine() {
+    const text = currentLine?.text ?? '';
+    ghostSamples = [{ t: 0, caret: 0 }];
+    activeGhost = text ? bestGhostFor(text) : undefined;
+    ghostCaret = activeGhost ? 0 : -1;
+  }
+
+  function armBlindIfNeeded() {
+    if (currentLine?.kind === 'blind_check') {
+      blindEndsAt = performance.now() + BLIND_CHECK_DURATION_SEC * 1000;
+    } else {
+      blindEndsAt = 0;
+    }
+    metronomeOn = currentLine?.kind === 'metronome';
+    resetGhostForCurrentLine();
+  }
+
+  $effect(() => {
+    if (sessionUi !== 'typing' || !activeGhost || !linePlay.startedAt) {
+      if (!activeGhost) ghostCaret = -1;
+      return;
+    }
+    const tick = () => {
+      const elapsed = Math.max(0, performance.now() - linePlay.startedAt);
+      ghostCaret = ghostCaretAt(activeGhost!, elapsed);
+    };
+    tick();
+    const id = window.setInterval(tick, 50);
+    return () => window.clearInterval(id);
   });
 
   function applyBootRouting(): void {
@@ -516,8 +745,19 @@
       if (e.key === 'Enter') {
         if (!q.multi && answers[questionIndex]!.length === 0) return;
         if (questionIndex < questions.length - 1) questionIndex += 1;
-        else navigate('probe-a');
+        else {
+          resetProbeA();
+          navigate('probe-a');
+        }
       }
+      return;
+    }
+    if (route === 'probe-a') {
+      onProbeAKey(e);
+      return;
+    }
+    if (route === 'probe-b') {
+      onProbeBKey(e);
       return;
     }
     if (route === 'result') {
@@ -548,16 +788,28 @@
         advanceAfterLine();
         return;
       }
+      if (sessionUi === 'unlockCard' && e.key === 'Tab') {
+        e.preventDefault();
+        unlockReachNonce += 1;
+        return;
+      }
       if (sessionUi === 'unlockCard' && e.key === 'Enter') {
-        sessionUi = 'typing';
-        linePlay = { ...createLinePlay(), startedAt: performance.now() };
-        maybeArmTimedTest();
+        if (unlockLeadsToSummary) {
+          unlockLeadsToSummary = false;
+          sessionUi = 'summary';
+          return;
+        }
+        sessionUi = 'handsReady';
+        inputState = createFreshInput();
+        linePlay = createLinePlay();
         return;
       }
       if (sessionUi === 'breakCard' && e.key === 'Enter') {
         continuousMs = 0;
+        breakEndsAt = 0;
         sessionUi = 'typing';
         linePlay = { ...createLinePlay(), startedAt: performance.now() };
+        armBlindIfNeeded();
         return;
       }
       if (sessionUi === 'summary' && e.key === 'Enter') {
@@ -578,8 +830,30 @@
       });
       inputState = result.input;
       linePlay = result.line;
+      const wasHandsReady = sessionUi === 'handsReady';
       sessionUi = result.ui;
       notices = result.notices;
+      if (wasHandsReady && result.ui === 'typing') {
+        armBlindIfNeeded();
+      }
+
+      if (result.scores.length > 0 && profile && mastery) {
+        const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+        for (const s of result.scores) {
+          if (s.correctFirstAttempt) playCorrect(soundOn);
+          else playError(soundOn);
+        }
+        mastery = applyKeystrokeScores(mastery, {
+          layout: layoutObj,
+          layoutId: profile.layoutId,
+          targetWpm: profile.targetWpm,
+          nowIso: new Date().toISOString(),
+          scores: result.scores,
+        });
+        levels = { ...mastery.levels };
+        sessionKeyRecords = [...mastery.keys.values()];
+        sessionEyesUpDelta = mastery.eyesUpDelta;
+      }
 
       if (result.ui === 'typing' && timedTestMode && timedTestEndsAt === 0) {
         maybeArmTimedTest();
@@ -594,14 +868,23 @@
         return;
       }
 
+      if (result.scores.length > 0 && linePlay.startedAt > 0) {
+        const tMs = Math.max(0, performance.now() - linePlay.startedAt);
+        ghostSamples = [...ghostSamples, { t: tMs, caret: linePlay.caret }];
+      }
+
       if (result.lineComplete) {
         const elapsed = Math.max(1, performance.now() - (linePlay.startedAt || performance.now()));
         lastLineWpm = netWpm(linePlay.caret, linePlay.errors.size, elapsed);
         lastLineAcc = metricAccuracy(linePlay.correctFirst, linePlay.totalKeys);
         sessionActiveMs += elapsed;
         continuousMs += elapsed;
+        if (currentLine) {
+          const ghost = buildGhostFromCarets(currentLine.text, ghostSamples, elapsed);
+          rememberBestGhost(ghost);
+        }
+        playLineComplete(soundOn);
         void persistLine();
-        void bumpKeysForCurrentLine();
       }
     }
   }
@@ -627,18 +910,54 @@
         ...profile,
         track: activeTrack,
         placedTrack,
+        layoutId: detectedLayout,
         updatedAt: new Date().toISOString(),
       };
       await getStorage().putProfile(profile);
+    }
+    if (activeTrack === 'foundations' || activeTrack === 'retrain') {
+      orient = createOrientState();
+      navigate('orient');
+      return;
     }
     navigate('today');
   }
 
   async function persistLine() {
-    if (!profile || !currentLine) return;
+    if (!profile || !currentLine || !mastery) return;
     const sessions = await getStorage().listSessions();
     const current = sessions[sessions.length - 1];
     if (!current) return;
+
+    const guideChanges: Array<{ code: string; from: number; to: number }> = [];
+    for (const [code, to] of Object.entries(mastery.levels)) {
+      const from = lineGuideSnapshot[code] ?? to;
+      if (from !== to) guideChanges.push({ code, from, to });
+    }
+    const errorsByKey = { ...mastery.errorsByKey };
+
+    let slowestCode = '';
+    let slowestMs = 0;
+    for (const [code, from] of Object.entries(lineGuideSnapshot)) {
+      void from;
+      const rec = mastery.keys.get(code);
+      if (!rec || rec.presses <= 0 || rec.timeToTypeMs == null) continue;
+      if (rec.timeToTypeMs > slowestMs) {
+        slowestMs = rec.timeToTypeMs;
+        slowestCode = code;
+      }
+    }
+    lastLineSlowest = slowestCode;
+    lastLineGuideChanges = guideChanges;
+    sessionGuideChanges = [...sessionGuideChanges, ...guideChanges];
+
+    for (const rec of mastery.keys.values()) {
+      await getStorage().putKeyStat(rec);
+    }
+    for (const rec of mastery.pairs.values()) {
+      await getStorage().putPairStat(rec);
+    }
+
     await getStorage().saveLineResult({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       sessionId: current.id,
@@ -647,10 +966,19 @@
       textHash: null,
       netWpm: lastLineWpm,
       accuracy: lastLineAcc,
-      errorsByKey: {},
-      guideChanges: [],
+      errorsByKey,
+      guideChanges,
       savedAt: new Date().toISOString(),
     });
+
+    mastery = {
+      ...mastery,
+      guideChanges: [],
+      errorsByKey: {},
+    };
+    lineGuideSnapshot = { ...mastery.levels };
+    sessionKeyRecords = [...mastery.keys.values()];
+
     if (currentLine.kind === 'blind_check') {
       await ensureMilestone(getStorage(), MILESTONE.firstBlindLine, { sessionId: current.id });
       if (lastLineWpm >= 30) {
@@ -662,47 +990,61 @@
     }
   }
 
-  async function bumpKeysForCurrentLine() {
-    if (!profile || !currentLine) return;
-    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
-    const nowIso = new Date().toISOString();
-    const counts = new Map<string, number>();
-    for (const ch of currentLine.text) {
-      if (ch === ' ') continue;
-      const lower = ch.toLowerCase();
-      const code =
-        layoutObj.keys.find(
-          (k) => k.base?.toLowerCase() === lower || k.shift?.toLowerCase() === lower,
-        )?.code;
-      if (!code) continue;
-      counts.set(code, (counts.get(code) ?? 0) + 1);
-    }
-    const byCode = new Map(sessionKeyRecords.map((k) => [k.code, k]));
-    for (const [code, n] of counts) {
-      const next = bumpKeyStatAfterLine(byCode.get(code), profile.layoutId, code, nowIso, n);
-      byCode.set(code, next);
-      await getStorage().putKeyStat(next);
-    }
-    sessionKeyRecords = [...byCode.values()];
-  }
-
   function advanceAfterLine() {
     if (continuousMs >= BREAK_AFTER_CONTINUOUS_MINUTES * 60_000) {
+      breakEndsAt = performance.now() + BREAK_DURATION_SEC * 1000;
       sessionUi = 'breakCard';
       return;
     }
     if (timedTestMode || lineIndex + 1 >= sessionLines.length) {
-      sessionUi = 'summary';
       void finishSession();
       return;
     }
     lineIndex += 1;
     sessionUi = 'typing';
     linePlay = { ...createLinePlay(), startedAt: performance.now() };
+    armBlindIfNeeded();
+    if (mastery) {
+      mastery = { ...mastery, lastExpectedChar: null };
+      lineGuideSnapshot = { ...mastery.levels };
+    }
+  }
+
+  function applyStreakToProfile(p: ProfileRecord, today: string): ProfileRecord {
+    const next = applyPracticeDay(
+      {
+        streakDays: p.streakDays,
+        lastPracticeDate: p.lastPracticeDate,
+        restDaysUsedThisWeek: p.restDaysUsedThisWeek,
+        weekStartIso: p.weekStartIso,
+      },
+      today,
+    );
+    return {
+      ...p,
+      streakDays: next.streakDays,
+      lastPracticeDate: next.lastPracticeDate,
+      restDaysUsedThisWeek: next.restDaysUsedThisWeek,
+      weekStartIso: next.weekStartIso,
+    };
+  }
+
+  async function estimateNewKeysMinutesToday(): Promise<number> {
+    const today = new Date().toISOString().slice(0, 10);
+    const sessions = await getStorage().listSessions();
+    let ms = 0;
+    for (const s of sessions) {
+      if (s.startedAt.slice(0, 10) === today) {
+        // New-keys block is ~30% of a planned session (§04).
+        ms += (s.activeMs ?? 0) * 0.3;
+      }
+    }
+    return ms / 60_000;
   }
 
   async function finishSession() {
     if (!profile) return;
+    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
     const sessions = await getStorage().listSessions();
     const current = sessions[sessions.length - 1];
     if (current) {
@@ -712,31 +1054,114 @@
         activeMs: sessionActiveMs,
         netWpm: lastLineWpm,
         accuracy: lastLineAcc,
+        peeks: (current.peeks ?? 0) + (linePlay.peeks || 0),
       });
     }
-    // Persist key levels / presses snapshot after summary
-    for (const rec of sessionKeyRecords) {
-      const level = levels[rec.code];
-      if (level != null && level !== rec.guideLevel) {
-        await getStorage().putKeyStat({ ...rec, guideLevel: level as GuideLevel });
-      } else {
+
+    let unlockedBefore = unlockedGroupCountForTrack(
+      layoutObj,
+      sessionKeyRecords,
+      profile.track,
+    );
+
+    if (mastery) {
+      mastery = applyEndSessionFade(mastery, {
+        layoutId: profile.layoutId,
+        targetWpm: profile.targetWpm,
+      });
+      levels = { ...mastery.levels };
+      sessionKeyRecords = [...mastery.keys.values()];
+      for (const rec of mastery.keys.values()) {
         await getStorage().putKeyStat(rec);
       }
-    }
-    const today = new Date().toISOString().slice(0, 10);
-    let streak = profile.streakDays;
-    if (profile.lastPracticeDate !== today) {
-      streak += 1;
-    }
-    profile = {
-      ...profile,
-      streakDays: streak,
-      lastPracticeDate: today,
-      updatedAt: new Date().toISOString(),
-    };
-    await getStorage().putProfile(profile);
+      for (const rec of mastery.pairs.values()) {
+        await getStorage().putPairStat(rec);
+      }
 
-    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+      const keys: KeyStat[] = [...mastery.keys.values()].map(keyStatFromRecord);
+      const pairs: PairStat[] = [...mastery.pairs.values()].map(pairStatFromRecord);
+      const learner: Learner = {
+        layoutId: profile.layoutId,
+        track: profile.track,
+        targetWpm: profile.targetWpm,
+        goalWpm: profile.goalWpm,
+        unlockedGroupCount: unlockedBefore,
+        keys,
+        pairs,
+        sessionCount: sessions.length,
+        dailyMinutes: profile.dailyMinutes,
+      };
+      const afterUnlock = tryUnlockNextGroup(learner);
+      const didUnlock = afterUnlock.unlockedGroupCount > unlockedBefore;
+
+      if (didUnlock) {
+        const nowIso = new Date().toISOString();
+        const seeded = seedUnlockedGroupKeys(
+          layoutObj,
+          profile.layoutId,
+          [...mastery.keys.values()],
+          afterUnlock.unlockedGroupCount,
+          nowIso,
+          afterUnlock.targetWpm,
+        );
+        for (const rec of seeded) {
+          await getStorage().putKeyStat(rec);
+        }
+        sessionKeyRecords = seeded;
+        mastery = createMasteryApplyState(
+          seeded,
+          [...mastery.pairs.values()],
+          Object.fromEntries(seeded.map((r) => [r.code, r.guideLevel])),
+        );
+        levels = { ...mastery.levels };
+        unlockTarget = unlockTargetCode(layoutObj, afterUnlock.unlockedGroupCount);
+        unlockedBefore = afterUnlock.unlockedGroupCount;
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      profile = {
+        ...applyStreakToProfile(profile, today),
+        targetWpm: afterUnlock.targetWpm,
+        eyesUpPoints: (profile.eyesUpPoints ?? 0) + sessionEyesUpDelta,
+        updatedAt: new Date().toISOString(),
+      };
+      await getStorage().putProfile(profile);
+
+      let slowPair = '';
+      let slowPairC = Number.POSITIVE_INFINITY;
+      for (const rec of mastery.pairs.values()) {
+        if (rec.count <= 0) continue;
+        const pair = {
+          ...createPairStat(rec.pair),
+          accuracy: rec.accuracy,
+          timeToTypeMs: rec.timeMs ?? 400,
+          count: rec.count,
+        };
+        const c = pairConfidence(pair, profile.targetWpm);
+        if (c < slowPairC) {
+          slowPairC = c;
+          slowPair = rec.pair;
+        }
+      }
+      sessionSlowestPair = slowPair;
+
+      if (didUnlock) {
+        playUnlock(soundOn);
+        unlockLeadsToSummary = true;
+        sessionUi = 'unlockCard';
+      } else {
+        sessionUi = 'summary';
+      }
+    } else {
+      const today = new Date().toISOString().slice(0, 10);
+      profile = {
+        ...applyStreakToProfile(profile, today),
+        updatedAt: new Date().toISOString(),
+      };
+      await getStorage().putProfile(profile);
+      sessionUi = 'summary';
+    }
+
     const keyRecords = await getStorage().getKeyStats(profile.layoutId);
     const letterCodes = layoutObj.keys
       .filter((k) => k.base && /^[a-z]$/i.test(k.base) && k.learn !== false)
@@ -760,14 +1185,30 @@
     }
   }
 
+  async function beginMasterySession(
+    keyRecords: KeyStatRecord[],
+    pairRecords: PairStatRecord[],
+    levelMap: Record<string, number>,
+  ) {
+    mastery = createMasteryApplyState(keyRecords, pairRecords, levelMap);
+    lineGuideSnapshot = { ...levelMap };
+    sessionEyesUpDelta = 0;
+    sessionGuideChanges = [];
+    sessionSlowestPair = '';
+    lastLineSlowest = '';
+    lastLineGuideChanges = [];
+    unlockLeadsToSummary = false;
+    sessionKeyRecords = keyRecords;
+    levels = { ...levelMap };
+  }
+
   async function startSession() {
     if (!profile) return;
     timedTestMode = false;
     timedTestEndsAt = 0;
     const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
-    const keyRecords = await getStorage().getKeyStats(profile.layoutId);
+    let keyRecords = await getStorage().getKeyStats(profile.layoutId);
     const pairRecords = await getStorage().getPairStats(profile.layoutId);
-    sessionKeyRecords = keyRecords;
 
     const unlocked = unlockedGroupCountForTrack(layoutObj, keyRecords, profile.track);
     const { keys, pairs, levels: nextLevels } = buildSessionKeysAndPairs(
@@ -776,9 +1217,9 @@
       pairRecords,
       unlocked,
     );
-    levels = nextLevels;
 
     const pack = getContentPackForLayout(profile.layoutId);
+    const newKeysMinutesToday = await estimateNewKeysMinutesToday();
     const plan = planSession({
       learner: {
         layoutId: profile.layoutId,
@@ -797,10 +1238,53 @@
       blocklist: pack.blocklist,
       rng: createSeededRandom(Date.now() % 1_000_000),
       nowIso: new Date().toISOString(),
+      newKeysMinutesToday,
     });
+
+    const planUnlocked = plan.learner.unlockedGroupCount;
+    let showUnlockAtStart = false;
+    if (planUnlocked > unlocked) {
+      const nowIso = new Date().toISOString();
+      keyRecords = seedUnlockedGroupKeys(
+        layoutObj,
+        profile.layoutId,
+        keyRecords,
+        planUnlocked,
+        nowIso,
+        plan.learner.targetWpm,
+      );
+      for (const rec of keyRecords) {
+        await getStorage().putKeyStat(rec);
+      }
+      profile = {
+        ...profile,
+        targetWpm: plan.learner.targetWpm,
+        updatedAt: nowIso,
+      };
+      await getStorage().putProfile(profile);
+      unlockTarget = unlockTargetCode(layoutObj, planUnlocked);
+      showUnlockAtStart = true;
+      playUnlock(profile.accessProfile.sound === true);
+      const rebuilt = buildSessionKeysAndPairs(
+        layoutObj,
+        keyRecords,
+        pairRecords,
+        planUnlocked,
+      );
+      await beginMasterySession(
+        keyRecords,
+        pairRecords,
+        Object.fromEntries(
+          keyRecords.map((r) => [r.code, rebuilt.levels[r.code] ?? r.guideLevel]),
+        ),
+      );
+    } else {
+      await beginMasterySession(keyRecords, pairRecords, nextLevels);
+    }
+
     sessionLines = plan.lines;
     lineIndex = 0;
-    sessionUi = 'handsReady';
+    sessionUi = showUnlockAtStart ? 'unlockCard' : 'handsReady';
     inputState = createFreshInput();
     linePlay = createLinePlay();
     continuousMs = 0;
@@ -834,7 +1318,25 @@
     linePlay = createLinePlay();
     continuousMs = 0;
     sessionActiveMs = 0;
-    sessionKeyRecords = await getStorage().getKeyStats(profile.layoutId);
+    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+    const keyRecords = await getStorage().getKeyStats(profile.layoutId);
+    const pairRecords = await getStorage().getPairStats(profile.layoutId);
+    const unlocked = unlockedGroupCountForTrack(layoutObj, keyRecords, profile.track);
+    const unlockedCodes = new Set(
+      layoutObj.learnOrder.slice(0, unlocked).flat(),
+    );
+    const byCode = new Map(keyRecords.map((r) => [r.code, r]));
+    const levelMap: Record<string, number> = {};
+    for (const key of layoutObj.keys) {
+      if (!key.base || key.base.length !== 1) continue;
+      if (unlockedCodes.has(key.code)) {
+        levelMap[key.code] = byCode.get(key.code)?.guideLevel ?? 0;
+      } else {
+        // Locked keys stay on full guide (L0) during own-text (EU-039).
+        levelMap[key.code] = 0;
+      }
+    }
+    await beginMasterySession(keyRecords, pairRecords, levelMap);
     await getStorage().createSession({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       layoutId: profile.layoutId,
@@ -856,6 +1358,7 @@
     if (!profile) return;
     const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
     const keyRecords = await getStorage().getKeyStats(profile.layoutId);
+    const pairRecords = await getStorage().getPairStats(profile.layoutId);
     const unlocked = Math.max(
       4,
       unlockedGroupCountForTrack(layoutObj, keyRecords, profile.track),
@@ -883,7 +1386,85 @@
     linePlay = createLinePlay();
     continuousMs = 0;
     sessionActiveMs = 0;
-    sessionKeyRecords = keyRecords;
+    const { levels: nextLevels } = buildSessionKeysAndPairs(
+      layoutObj,
+      keyRecords,
+      pairRecords,
+      unlocked,
+    );
+    await beginMasterySession(keyRecords, pairRecords, nextLevels);
+    await getStorage().createSession({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      layoutId: profile.layoutId,
+      track: profile.track,
+      startedAt: new Date().toISOString(),
+      endedAt: null,
+      activeMs: 0,
+      netWpm: null,
+      accuracy: null,
+      blindShare: null,
+      peeks: 0,
+      blindCheck: false,
+    });
+    navigate('practice');
+  }
+
+  /** EU-034: Library → code snippet practice when Coder overlay is on. */
+  async function startCoderPractice() {
+    if (!profile || !isCoderEnabled(profile.overlays)) return;
+    const { lines } = linesFromRandomSnippet(Date.now() % 1_000_000);
+    if (lines.length === 0) return;
+    timedTestMode = false;
+    timedTestEndsAt = 0;
+    sessionLines = lines;
+    lineIndex = 0;
+    sessionUi = 'handsReady';
+    inputState = createFreshInput();
+    linePlay = createLinePlay();
+    continuousMs = 0;
+    sessionActiveMs = 0;
+    const keyRecords = await getStorage().getKeyStats(profile.layoutId);
+    const pairRecords = await getStorage().getPairStats(profile.layoutId);
+    const levelMap = Object.fromEntries(keyRecords.map((r) => [r.code, r.guideLevel]));
+    await beginMasterySession(keyRecords, pairRecords, levelMap);
+    await getStorage().createSession({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      layoutId: profile.layoutId,
+      track: profile.track,
+      startedAt: new Date().toISOString(),
+      endedAt: null,
+      activeMs: 0,
+      netWpm: null,
+      accuracy: null,
+      blindShare: null,
+      peeks: 0,
+      blindCheck: false,
+    });
+    navigate('practice');
+  }
+
+  /** EU-035: Library → number-row drills when Numbers overlay is on. */
+  async function startNumbersPractice() {
+    if (!profile || !isNumbersEnabled(profile.overlays)) return;
+    const layoutObj = LAYOUTS[profile.layoutId] ?? LAYOUTS['qwerty-us']!;
+    const lines = generateNumberDrillLines(
+      layoutObj,
+      createSeededRandom(Date.now() % 1_000_000),
+      4,
+    );
+    timedTestMode = false;
+    timedTestEndsAt = 0;
+    sessionLines = lines;
+    lineIndex = 0;
+    sessionUi = 'handsReady';
+    inputState = createFreshInput();
+    linePlay = createLinePlay();
+    continuousMs = 0;
+    sessionActiveMs = 0;
+    const keyRecords = await getStorage().getKeyStats(profile.layoutId);
+    const pairRecords = await getStorage().getPairStats(profile.layoutId);
+    const levelMap = Object.fromEntries(keyRecords.map((r) => [r.code, r.guideLevel]));
+    await beginMasterySession(keyRecords, pairRecords, levelMap);
     await getStorage().createSession({
       schemaVersion: STORAGE_SCHEMA_VERSION,
       layoutId: profile.layoutId,
@@ -1008,7 +1589,18 @@
     if (q6.has(1)) access.textSizePx = 34;
     if (q6.has(2)) access.theme = 'high-contrast';
     if (q6.has(3)) access.reducedMotion = true;
+    if (q6.has(4)) access.fingerMap = 'one-hand-left';
+    if (q6.has(5)) access.fingerMap = 'one-hand-right';
     if (q6.has(6)) access.sound = false;
+
+    const q1 = answers[0]?.[0] ?? 4;
+    const overlays: string[] = [];
+    if (q1 === 2) overlays.push('coder');
+    if (q1 === 3) overlays.push('numbers');
+
+    const q5 = answers[4]?.[0] ?? 1;
+    const keyboardShape =
+      q5 === 2 ? 'full' : q5 === 3 ? 'split' : 'laptop';
 
     const now = new Date().toISOString();
     profile = {
@@ -1017,12 +1609,12 @@
       layoutId: detectedLayout,
       track: activeTrack,
       placedTrack,
-      overlays: [],
+      overlays,
       accessProfile: access,
       dailyMinutes: daily,
       targetWpm: result.targetWpm,
       goalWpm: result.goalWpm,
-      keyboardShape: 'laptop',
+      keyboardShape,
       reminderTime: null,
       streakDays: 0,
       lastPracticeDate: null,
@@ -1035,6 +1627,20 @@
       updatedAt: now,
     };
     await getStorage().putProfile(profile);
+
+    const layoutObj = LAYOUTS[detectedLayout] ?? LAYOUTS['qwerty-us']!;
+    const seeded = seedKeysForPlacement(
+      layoutObj,
+      detectedLayout,
+      activeTrack,
+      result.targetWpm,
+      now,
+      { accurateBlindCodes: probeBAccurateCodes },
+    );
+    for (const rec of seeded) {
+      await getStorage().putKeyStat(rec);
+    }
+
     const base: BaselineRecord = {
       schemaVersion: STORAGE_SCHEMA_VERSION,
       id: 1,
@@ -1056,32 +1662,136 @@
     navigate('result');
   }
 
+  function resetProbeA() {
+    probeAChars = 0;
+    probeAErrors = 0;
+    probeAStarted = 0;
+    probeACaret = 0;
+    probeARemainingSec = 45;
+    probeADone = false;
+    probeErrors = new Set();
+  }
+
+  function resetProbeB() {
+    probeBPhase = 'home';
+    probeBHome = 0;
+    probeBCaret = 0;
+    probeBBlindCorrect = 0;
+    probeBBlindTotal = 0;
+    probeB3Wpm = 0;
+    probeB3Started = 0;
+    probeB3RemainingSec = 0;
+    probeBDone = false;
+    probeBAccurateCodes = [];
+    probeErrors = new Set();
+  }
+
+  function finishProbeA() {
+    if (probeADone) return;
+    probeADone = true;
+    resetProbeB();
+    navigate('probe-b');
+  }
+
+  function finishProbeB3() {
+    if (probeBDone || probeBPhase !== 'b3') return;
+    probeBDone = true;
+    const elapsed = Math.max(1, performance.now() - (probeB3Started || performance.now()));
+    probeB3Wpm = netWpm(
+      probeBCaret,
+      Math.max(0, probeBBlindTotal - probeBBlindCorrect),
+      elapsed,
+    );
+    void finishProbesAndPlace();
+  }
+
   function onProbeAKey(e: KeyboardEvent) {
+    if (probeADone) return;
+    if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+    if (e.key.length === 1 || e.key === 'Backspace') e.preventDefault();
     if (!probeAStarted) probeAStarted = performance.now();
+    const passage = t.probeA.passage;
     if (e.key.length === 1) {
+      const expected = passage[probeACaret] ?? '';
       probeAChars += 1;
+      if (e.key === expected) {
+        probeACaret = Math.min(probeACaret + 1, passage.length);
+        const next = new Set(probeErrors);
+        next.delete(probeACaret - 1);
+        probeErrors = next;
+      } else {
+        probeAErrors += 1;
+        const next = new Set(probeErrors);
+        next.add(probeACaret);
+        probeErrors = next;
+      }
       if (e.code === 'KeyQ' && e.key.toLowerCase() === 'a') detectedLayout = 'azerty-fr';
       if (e.code === 'KeyQ' && e.key.toLowerCase() === 'q') detectedLayout = 'qwerty-us';
+      if (e.code === 'KeyY' && e.key.toLowerCase() === 'z') detectedLayout = 'qwerty-us';
     }
-    const elapsed = performance.now() - probeAStarted;
-    if (elapsed >= 45_000) {
-      navigate('probe-b');
-    }
+    if (probeACaret >= passage.length) finishProbeA();
   }
 
   function onProbeBKey(e: KeyboardEvent) {
-    if (probeBHome < 4) {
+    if (probeBDone) return;
+    if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+    if (e.key.length === 1 || e.key === 'Backspace') e.preventDefault();
+    if (probeBPhase === 'home') {
       const expected = ['KeyF', 'KeyJ', 'KeyA', 'Semicolon'][probeBHome];
-      if (e.code === expected) probeBHome += 1;
+      if (e.code === expected) {
+        probeBHome += 1;
+        if (probeBHome >= 4) {
+          probeBPhase = 'b2';
+          probeBCaret = 0;
+          probeErrors = new Set();
+        }
+      }
       return;
     }
-    if (e.key.length === 1) {
+
+    if (probeBPhase === 'b2') {
+      if (e.key.length !== 1) return;
+      const expected = PROBE_B2_TEXT[probeBCaret] ?? '';
       probeBBlindTotal += 1;
-      probeBBlindCorrect += 1;
+      if (e.key === expected) {
+        probeBBlindCorrect += 1;
+        const layoutObj = LAYOUTS[detectedLayout] ?? LAYOUTS['qwerty-us']!;
+        const code = codeForChar(layoutObj, expected);
+        if (code && !probeBAccurateCodes.includes(code)) {
+          probeBAccurateCodes = [...probeBAccurateCodes, code];
+        }
+        probeBCaret += 1;
+        const next = new Set(probeErrors);
+        next.delete(probeBCaret - 1);
+        probeErrors = next;
+      } else {
+        const next = new Set(probeErrors);
+        next.add(probeBCaret);
+        probeErrors = next;
+      }
+      if (probeBCaret >= PROBE_B2_TEXT.length) {
+        probeBPhase = 'b3';
+        probeBCaret = 0;
+        probeErrors = new Set();
+        probeB3Started = performance.now();
+        probeB3RemainingSec = 20;
+      }
+      return;
     }
-    if (probeBBlindTotal >= 40) {
-      probeB3Wpm = 25;
-      void finishProbesAndPlace();
+
+    // B3 — 20 s common words
+    if (!probeB3Started) {
+      probeB3Started = performance.now();
+      probeB3RemainingSec = 20;
+    }
+    const passage = t.probeB.passage;
+    if (e.key.length === 1) {
+      const expected = passage[probeBCaret % passage.length] ?? '';
+      probeBBlindTotal += 1;
+      if (e.key === expected) {
+        probeBBlindCorrect += 1;
+        probeBCaret += 1;
+      }
     }
   }
 
@@ -1263,23 +1973,31 @@
         }}
       />
     {:else if route === 'probe-a'}
-      <div class="probe-screen">
+      <div class="probe-screen" data-testid="probe-a">
         <p class="eyebrow">{t.probeA.eyebrow}</p>
         <h1>{t.probeA.title}</h1>
         <p>{t.probeA.hint}</p>
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <pre class="probe" tabindex="0" onkeydown={onProbeAKey}>{t.probeA.passage}</pre>
+        {#if probeAStarted}
+          <p class="status-pill" role="status">
+            {t.probeA.countdown.replace('{seconds}', String(probeARemainingSec))}
+          </p>
+        {/if}
+        <div class="probe">
+          <TypingSurface text={t.probeA.passage} caret={probeACaret} errors={probeErrors} />
+        </div>
       </div>
     {:else if route === 'probe-b'}
-      <div class="probe-screen">
+      <div class="probe-screen" data-testid="probe-b">
         <p class="eyebrow">{t.probeB.eyebrow}</p>
         <h1>{t.probeB.title}</h1>
-        <p>{probeBHome < 4 ? t.probeB.home : t.probeB.blind}</p>
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <pre class="probe" tabindex="0" onkeydown={onProbeBKey}>{probeBHome < 4 ? t.probeB.homeLabel : t.probeB.passage}</pre>
-        {#if probeBHome < 4}
+        <p>{probeBPhase === 'home' ? t.probeB.home : t.probeB.blind}</p>
+        {#if probeBPhase === 'b3' && probeB3Started}
+          <p class="status-pill" role="status">
+            {t.probeB.countdown.replace('{seconds}', String(probeB3RemainingSec))}
+          </p>
+        {/if}
+        {#if probeBPhase === 'home'}
+          <p class="probe-home-label">{t.probeB.homeLabel}</p>
           <Keyboard
             {layout}
             mode="zones"
@@ -1290,6 +2008,13 @@
             reducedMotion={false}
           />
         {:else}
+          <div class="probe">
+            <TypingSurface
+              text={probeBPhase === 'b2' ? PROBE_B2_TEXT : t.probeB.passage}
+              caret={probeBPhase === 'b2' ? probeBCaret : probeBCaret % Math.max(1, t.probeB.passage.length)}
+              errors={probeErrors}
+            />
+          </div>
           <Hands {layout} mode="rest" label={t.a11y.handsRest} />
         {/if}
       </div>
@@ -1394,23 +2119,55 @@
         <h1>{t.practice.lineResult}</h1>
         <p>{t.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
         <p>{t.practice.accuracy}: {(lastLineAcc * 100).toFixed(0)}%</p>
+        {#if lastLineSlowest}
+          <p>{t.practice.slowest}: {lastLineSlowest.replace(/^Key/, '')}</p>
+        {/if}
+        {#each lastLineGuideChanges as ch}
+          <p>
+            {t.practice.guideChange
+              .replace('{key}', ch.code.replace(/^Key/, ''))
+              .replace('{from}', String(ch.from))
+              .replace('{to}', String(ch.to))}
+          </p>
+        {/each}
         <p class="hint">{t.questions.continue}</p>
         </div>
       {:else if sessionUi === 'breakCard'}
         <div class="state-card">
         <h1>{t.practice.break}</h1>
-        <p class="hint">{t.practice.breakSkip}</p>
+        <p class="hint">
+          {t.practice.breakCountdown.replace('{seconds}', String(breakRemainingSec))}
+        </p>
         </div>
       {:else if sessionUi === 'unlockCard'}
         <div class="state-card">
         <h1>{t.practice.unlock}</h1>
-        <Keyboard {layout} mode="zones" hands="reach" target="KeyK" {levels} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
-        <p class="hint">{t.practice.unlockStart}</p>
+        {#key unlockReachNonce}
+          <Keyboard {layout} mode="zones" hands="reach" target={unlockTarget} {levels} reducedMotion={profile?.accessProfile.reducedMotion ?? false} />
+        {/key}
+        <p class="hint">{t.practice.unlockReplay}</p>
         </div>
       {:else if sessionUi === 'summary'}
         <div class="state-card">
         <h1>{t.practice.summary}</h1>
         <p>{t.practice.wpm}: {lastLineWpm.toFixed(0)}</p>
+        <p>{t.practice.accuracy}: {(lastLineAcc * 100).toFixed(0)}%</p>
+        <p>{t.practice.eyesUpEarned}: {sessionEyesUpDelta}</p>
+        {#if sessionSlowestPair}
+          <p>{t.practice.slowestPair}: {sessionSlowestPair}</p>
+        {/if}
+        {#if sessionGuideChanges.length === 0}
+          <p>{t.practice.noGuideChanges}</p>
+        {:else}
+          {#each sessionGuideChanges.slice(-8) as ch}
+            <p>
+              {t.practice.guideChange
+                .replace('{key}', ch.code.replace(/^Key/, ''))
+                .replace('{from}', String(ch.from))
+                .replace('{to}', String(ch.to))}
+            </p>
+          {/each}
+        {/if}
         <p class="hint">{t.practice.done}</p>
         {#if updateWaiting}
           <aside class="update-banner" role="status">
@@ -1424,19 +2181,53 @@
         {#if notices.includes('caps_lock')}
           <p class="status-pill warn" role="status">{t.practice.capsLock}</p>
         {/if}
+        {#if notices.includes('ime')}
+          <p class="status-pill warn" role="status">{t.practice.ime}</p>
+        {/if}
         {#if inputState.peeking}
           <p class="status-pill" role="status">{t.practice.peek}</p>
         {/if}
+        {#if timedTestMode && timedTestEndsAt > 0}
+          <p class="status-pill" role="status">
+            {t.practice.timedRemaining.replace('{seconds}', String(timedRemainingSec))}
+          </p>
+        {/if}
+        {#if currentLine.kind === 'blind_check' && blindRemainingSec > 0}
+          <p class="status-pill" role="status">
+            {t.practice.blindCountdown.replace('{seconds}', String(blindRemainingSec))}
+          </p>
+        {/if}
+        {#if metronomeOn}
+          <p class="status-pill metronome" class:pulse={!profile?.accessProfile.reducedMotion} role="status">
+            {t.practice.metronomeHint}
+          </p>
+        {/if}
         <!-- No live WPM while typing (required for foundations/retrain; line result still shows WPM). -->
-        <TypingSurface text={currentLine.text} caret={linePlay.caret} errors={linePlay.errors} marked={linePlay.marked} />
-        <Keyboard
-          {layout}
-          mode="levels"
-          hands={levels[Object.keys(levels)[0] ?? ''] === 0 ? 'reach' : 'none'}
-          {levels}
-          peek={inputState.peeking}
-          reducedMotion={profile?.accessProfile.reducedMotion ?? false}
+        {#if activeGhost}
+          <p class="hint" role="status">{t.library.ghostRaceHint}</p>
+        {/if}
+        <TypingSurface
+          text={currentLine.text}
+          caret={linePlay.caret}
+          errors={linePlay.errors}
+          marked={linePlay.marked}
+          ghostCaret={ghostCaret}
         />
+        {#if currentLine.kind !== 'blind_check'}
+          {@const needReach =
+            expectedPracticeCode != null && (levels[expectedPracticeCode] ?? 0) === 0}
+          <Keyboard
+            {layout}
+            mode="levels"
+            hands={needReach ? 'reach' : 'none'}
+            target={needReach ? expectedPracticeCode : undefined}
+            {levels}
+            peek={inputState.peeking}
+            reducedMotion={profile?.accessProfile.reducedMotion ?? false}
+          />
+        {:else}
+          <Hands {layout} mode="rest" label={t.a11y.handsRest} />
+        {/if}
       {:else}
         <h1>{t.practice.notStarted}</h1>
         <p class="hint">{t.practice.backToToday}</p>
@@ -1473,8 +2264,10 @@
           <ol class="history">
             {#each historySessions as s}
               <li>
-                {(s.netWpm ?? 0).toFixed(0)} {t.practice.wpm}
-                · {((s.accuracy ?? 0) * 100).toFixed(0)}%
+                {t.progress.sessionLine
+                  .replace('{wpm}', (s.netWpm ?? 0).toFixed(0))
+                  .replace('{wpmLabel}', t.practice.wpm)
+                  .replace('{accuracy}', ((s.accuracy ?? 0) * 100).toFixed(0))}
               </li>
             {/each}
           </ol>
@@ -1487,7 +2280,11 @@
         {:else}
           <ul>
             {#each progressMilestones as m}
-              <li>{m.id} — {m.reachedAt.slice(0, 10)}</li>
+              <li>
+                {t.progress.milestoneLine
+                  .replace('{id}', m.id)
+                  .replace('{date}', m.reachedAt.slice(0, 10))}
+              </li>
             {/each}
           </ul>
         {/if}
@@ -1519,6 +2316,12 @@
       <div class="library-actions">
         <button type="button" onclick={() => { orient = createOrientState(); navigate('orient'); }}>{t.library.orient}</button>
         <button type="button" onclick={() => void startTimedTest()}>{t.library.timedTestStart}</button>
+        {#if profile && isCoderEnabled(profile.overlays)}
+          <button type="button" onclick={() => void startCoderPractice()}>{t.library.coderStart}</button>
+        {/if}
+        {#if profile && isNumbersEnabled(profile.overlays)}
+          <button type="button" onclick={() => void startNumbersPractice()}>{t.library.numbersStart}</button>
+        {/if}
       </div>
       <section class="settings-group" aria-labelledby="own-text-heading">
         <h2 id="own-text-heading">{t.library.ownText}</h2>
@@ -1687,6 +2490,36 @@
       <section class="settings-group" aria-labelledby="settings-data">
         <h2 id="settings-data">{t.settings.groupData}</h2>
         <button type="button" onclick={() => void exportData()}>{t.settings.export}</button>
+        <button type="button" onclick={triggerWelcomeImport}>{t.settings.import}</button>
+        <label>
+          {t.settings.reminderTime}
+          <input
+            type="time"
+            value={profile?.reminderTime ?? ''}
+            onchange={(e) => {
+              if (!profile) return;
+              const raw = e.currentTarget.value || null;
+              const parsed = parseReminderTime(raw);
+              profile = {
+                ...profile,
+                reminderTime: parsed ? formatReminderTime(parsed) : null,
+                updatedAt: new Date().toISOString(),
+              };
+              void getStorage().putProfile(profile);
+            }}
+          />
+        </label>
+        <p class="hint">{t.settings.reminderHint}</p>
+        {#if profile?.reminderTime}
+          <button
+            type="button"
+            onclick={() => {
+              if (!profile) return;
+              profile = { ...profile, reminderTime: null, updatedAt: new Date().toISOString() };
+              void getStorage().putProfile(profile);
+            }}
+          >{t.settings.reminderOff}</button>
+        {/if}
         <button type="button" onclick={() => void deleteAll()}>{t.settings.delete}</button>
       </section>
       </div>
@@ -1736,6 +2569,23 @@
   .page[data-route='practice'] .status-pill.warn {
     background: color-mix(in srgb, var(--color-state-warning, #b7791f) 15%, transparent);
     border-color: var(--color-state-warning, #b7791f);
+  }
+  .page[data-route='practice'] .status-pill.metronome.pulse {
+    animation: metronome-pulse 0.5s ease-in-out infinite;
+  }
+  @keyframes metronome-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.06);
+      opacity: 0.75;
+    }
+  }
+  :global([data-reduced-motion='true']) .page[data-route='practice'] .status-pill.metronome.pulse {
+    animation: none;
   }
   .probe-screen {
     display: flex;
@@ -1839,6 +2689,10 @@
     border: 1px solid var(--color-surface-border, #e4e1da);
     font-family: var(--font-family-practice, monospace);
     white-space: pre-wrap;
+  }
+  .probe-home-label {
+    font-family: var(--font-family-ui, sans-serif);
+    margin: 0.75rem 0;
   }
   .history {
     padding-left: 1.25rem;

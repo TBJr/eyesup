@@ -5,6 +5,7 @@ import {
   BLOCK_NEW_KEYS_SHARE,
   BLOCK_WARMUP_SHARE,
   BLOCK_WORDS_TEXT_SHARE,
+  NEW_KEYS_DAILY_CAP_MINUTES,
   SESSION_LINES_PER_MINUTE,
 } from './params.js';
 import { generateLine, type GenerateLineInput, type LetterModel } from './generator.js';
@@ -28,6 +29,11 @@ export interface PlanSessionInput {
   readonly nowIso: string;
   /** Optional override of planned minutes (defaults to learner.dailyMinutes). */
   readonly minutes?: number;
+  /**
+   * Minutes already spent on new-key blocks today (EU / §04 daily cap).
+   * When >= NEW_KEYS_DAILY_CAP_MINUTES, the new-keys share is redistributed.
+   */
+  readonly newKeysMinutesToday?: number;
 }
 
 export interface PlanSessionResult {
@@ -139,6 +145,12 @@ export function planSession(input: PlanSessionInput): PlanSessionResult {
   let mixed = shareCount(n, BLOCK_MIXED_REVIEW_SHARE);
   let words = shareCount(n, BLOCK_WORDS_TEXT_SHARE);
   let tail = shareCount(n, BLOCK_BLIND_OR_COOLDOWN_SHARE);
+
+  const newKeysToday = input.newKeysMinutesToday ?? 0;
+  if (newKeysToday >= NEW_KEYS_DAILY_CAP_MINUTES && neu > 0) {
+    mixed += neu;
+    neu = 0;
+  }
 
   // Fluency: shift a word-line from mixed into words for more real_words practice.
   if (track === 'fluency' && mixed > 0) {

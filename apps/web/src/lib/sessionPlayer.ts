@@ -29,6 +29,17 @@ export interface LinePlayState {
   peeks: number;
 }
 
+/** One scored practice keystroke for mastery (EU-013 / EU-018). */
+export interface KeystrokeScoreEvent {
+  readonly expectedChar: string;
+  readonly got: string;
+  readonly correctFirstAttempt: boolean;
+  readonly intervalMs: number;
+  readonly isFirstKeyOfLine: boolean;
+  readonly peeked: boolean;
+  readonly timeStamp: number;
+}
+
 export function createLinePlay(): LinePlayState {
   return {
     caret: 0,
@@ -49,6 +60,7 @@ export interface KeyHandlerResult {
   ui: SessionUiState;
   lineComplete: boolean;
   notices: string[];
+  scores: KeystrokeScoreEvent[];
 }
 
 export function handlePracticeKey(
@@ -67,6 +79,7 @@ export function handlePracticeKey(
   }
 
   const notices: string[] = [];
+  const scores: KeystrokeScoreEvent[] = [];
   let ui = options.ui;
   let input = options.input;
   let line = { ...options.line, errors: new Set(options.line.errors), marked: new Set(options.line.marked) };
@@ -80,21 +93,21 @@ export function handlePracticeKey(
       ui = 'typing';
       line = { ...createLinePlay(), startedAt: performance.now() };
     }
-    return { input, line, ui, lineComplete, notices };
+    return { input, line, ui, lineComplete, notices, scores };
   }
 
   if (event.key === 'Escape' && (ui === 'typing' || ui === 'paused')) {
     event.preventDefault();
     ui = ui === 'typing' ? 'paused' : 'typing';
-    return { input, line, ui, lineComplete, notices };
+    return { input, line, ui, lineComplete, notices, scores };
   }
 
   if (ui === 'paused') {
-    return { input, line, ui, lineComplete, notices };
+    return { input, line, ui, lineComplete, notices, scores };
   }
 
   if (ui !== 'typing') {
-    return { input, line, ui, lineComplete, notices };
+    return { input, line, ui, lineComplete, notices, scores };
   }
 
   const raw = toRawKeyEvent(event);
@@ -116,15 +129,26 @@ export function handlePracticeKey(
 
     const expected = options.current.text[line.caret] ?? '';
     const got = action.key;
-    line.totalKeys += 1;
-
+    const isFirstKeyOfLine = line.totalKeys === 0;
     const now = action.timeStamp;
-    if (line.lastDown !== undefined && line.startedAt > 0) {
-      // active time counted by caller via rAF / blur; keep lastDown
-    }
+    const intervalMs =
+      line.lastDown !== undefined ? Math.max(0, now - line.lastDown) : 0;
+    const correctFirstAttempt = got === expected;
+
+    scores.push({
+      expectedChar: expected,
+      got,
+      correctFirstAttempt,
+      intervalMs,
+      isFirstKeyOfLine,
+      peeked: Boolean(action.peeking),
+      timeStamp: now,
+    });
+
+    line.totalKeys += 1;
     line.lastDown = now;
 
-    if (got === expected) {
+    if (correctFirstAttempt) {
       line.correctFirst += 1;
       line.caret += 1;
       if (line.caret >= options.current.text.length) {
@@ -144,7 +168,7 @@ export function handlePracticeKey(
     }
   }
 
-  return { input, line, ui, lineComplete, notices };
+  return { input, line, ui, lineComplete, notices, scores };
 }
 
 export function createFreshInput(): InputAdapterState {

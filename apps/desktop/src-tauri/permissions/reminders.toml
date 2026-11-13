@@ -1,0 +1,6 @@
+[[permission]]
+identifier = "allow-reminder-stub"
+description = "Allows stub show_reminder_notification until tauri-plugin-notification is approved (EU-047)"
+commands.allow = [
+  "show_reminder_notification"
+]

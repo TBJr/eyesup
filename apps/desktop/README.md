@@ -48,7 +48,11 @@ Unsigned milestone: stub commands `check_for_update` / `apply_update` return `up
 ## Release builds (EU-044)
 
 - Workflow: [`.github/workflows/release.yml`](../../.github/workflows/release.yml) on `v*` tags or `workflow_dispatch`
-- Jobs: same checks as CI → matrix Tauri build (Ubuntu 22.04 `.deb`/`.rpm`/AppImage, macOS DMG, Windows MSI/NSIS) via `tauri-apps/tauri-action@v0` → draft GitHub release with SHA-256 checksums
+- Jobs: same checks as CI → matrix Tauri build via `tauri-apps/tauri-action@v0` → draft GitHub release with SHA-256 checksums:
+  - Linux (Ubuntu 22.04): `.deb`, `.rpm`, AppImage
+  - macOS: universal DMG (`--target universal-apple-darwin`)
+  - Windows x64: MSI + NSIS; Windows ARM64: NSIS only (`--target aarch64-pc-windows-msvc`)
+- **Flatpak:** not a Tauri 2 `bundle.targets` value. Intent and stub manifest live in [`flatpak/`](./flatpak/); Flathub packaging starts from the released `.deb`
 - Signing and updater artifacts stay skipped until `TAURI_SIGNING_PRIVATE_KEY` (and related secrets) are present — [docs/release-runbook.md](../../docs/release-runbook.md)
 
 ## Icons

@@ -60,6 +60,9 @@ export const BLIND_CHECK_DURATION_SEC = 30;
 /** §04 Curriculum — break card after continuous typing (minutes). */
 export const BREAK_AFTER_CONTINUOUS_MINUTES = 20;
 
+/** §04 Curriculum / EU-026 — suggested stretch break length (seconds). */
+export const BREAK_DURATION_SEC = 30;
+
 /** §04 Curriculum — stop introducing new keys after this many minutes per day. */
 export const NEW_KEYS_DAILY_CAP_MINUTES = 30;
 

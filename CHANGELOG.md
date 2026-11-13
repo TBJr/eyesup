@@ -6,6 +6,9 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ### Fixed
 
+- Practice now records real key mastery (accuracy, timing, guide fade and unlocks) instead of only counting presses, so the on-screen keyboard fades and new key groups unlock as you improve (EU-013 / EU-018).
+- Line results and session summaries show slowest key, guide changes and eyes-up points; blind-check lines hide the on-screen keyboard; dyslexia spacing applies to practice text.
+- Onboarding probes score real keystrokes; Adaptive and Fluency seed the right starting keys; Result leads to Orient or practice by track; access options set finger maps and optional sound cues.
 - Orient hand tips now line up with the home-row keys, and each Orient step advances by pressing the taught keys (F then J on the bumps step) instead of Enter.
 - Hand guides overlay the keys (as in design) with clearer fingertip markers, so home-row fingers sit on A–F and J–;.
 - Orient matches the design lesson: four steps, a Your-turn card with So far chips, and a six-key drill (F J D K S L) before Try it.
@@ -15,11 +18,15 @@ All notable changes to EyesUp are recorded here. The format follows [Keep a Chan
 
 ### Changed
 
+- Desktop release CI now builds a universal macOS DMG and a Windows ARM64 NSIS installer alongside Linux and Windows x64 (still unsigned until signing secrets exist).
+- Flatpak is documented as a Flathub post-deb step with a stub under `apps/desktop/flatpak/` — Tauri 2 does not take `"flatpak"` as a bundle target.
 - Onboarding and daily hubs match the design more closely: Orient stepper with posture and reach, Questions and Result cards, Today and Progress/Library/Settings in a side-nav hub, practice peek/Caps/break cards, and grouped Settings sections (EU-050 / EU-051).
 - Interface screens now follow the design snapshots: Welcome hero with zone keyboard and hands, Progress heatmap on the keyboard plus crossover chart, and shared shell components (logo, cards, headers).
 
 ### Added
 
+- Blind-check 30-second countdown, unlock-card Tab replay, new-key daily cap, fluency metronome cue, own-text locked-key L0 guides, Settings import, break 30-second countdown, and streak rest-day handling.
+- Coder and Numbers Library practice when those overlays are on; ghost race against your best run on the same line; optional daily reminder time with a desktop notification stub (EU-034 / EU-035 / EU-038 / EU-047).
 - Desktop first-launch import screen (`#/desktop-import`) for web JSON exports (EU-043).
 - Milestone writers for first blind line, all letters unlocked, crossover, and 30 WPM blind (FR-24).
 - Desktop release workflow (`.github/workflows/release.yml`) builds unsigned Linux, macOS and Windows installers and opens a draft GitHub release with checksums (EU-044).

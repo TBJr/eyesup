@@ -128,6 +128,32 @@ describe('scheduler (EU-015, EU-016, C1, C2)', () => {
     expect(plan.lines.some((l) => l.kind === 'warmup')).toBe(true);
   });
 
+  it('skips new-key drills when daily new-key cap is reached', () => {
+    const keys = layout.learnOrder.slice(0, 1).flat().map((code) => createKeyStat(code));
+    const learner: Learner = {
+      layoutId: layout.id,
+      track: 'foundations',
+      targetWpm: 15,
+      goalWpm: 30,
+      unlockedGroupCount: 1,
+      keys,
+      pairs: [],
+      sessionCount: 0,
+      dailyMinutes: 12,
+    };
+    const capped = planSession({
+      learner,
+      layout,
+      letterModel,
+      wordList,
+      blocklist,
+      rng: createSeededRandom(2),
+      nowIso: '2026-01-01T12:00:00.000Z',
+      newKeysMinutesToday: 30,
+    });
+    expect(capped.lines.every((l) => l.kind !== 'key_drill')).toBe(true);
+  });
+
   it('plans fluency sessions with pair, metronome and rollover lines (EU-033)', () => {
     const keys = layout.learnOrder.flat().map((code) => {
       const k = createKeyStat(code);

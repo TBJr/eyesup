@@ -1,3 +1,4 @@
+mod reminders;
 mod sqlite_adapter;
 mod updater;
 mod window_state;
@@ -10,6 +11,7 @@ use sqlite_adapter::{
 };
 use std::sync::Mutex;
 use tauri::{Manager, WindowEvent};
+use reminders::show_reminder_notification;
 use updater::{apply_update, check_for_update};
 use window_state::{get_window_state, set_fullscreen, set_window_state};
 
@@ -79,7 +81,8 @@ pub fn run() {
             apply_update,
             get_window_state,
             set_window_state,
-            set_fullscreen
+            set_fullscreen,
+            show_reminder_notification
         ])
         .run(tauri::generate_context!())
         .expect("error while running EyesUp");

@@ -9,11 +9,11 @@
 | --- | --- |
 | EU-042 Tauri + SQLite StorageAdapter | Full invoke surface; web factory selects SQLite in desktop |
 | EU-043 Import web export | `#/desktop-import` first-launch file pick + `importJson` |
-| EU-044 Installers CI | `.github/workflows/release.yml` unsigned matrix + draft checksums |
+| EU-044 Installers CI | `.github/workflows/release.yml` unsigned matrix: Linux deb/rpm/AppImage, universal macOS DMG, Windows x64 MSI/NSIS + ARM64 NSIS, draft checksums; Flatpak via `apps/desktop/flatpak/` stub (not a Tauri target) |
 | EU-045 Signing | Conditional on secrets; names in runbook / owner checklist |
 | EU-046 Auto-updates | Stub commands + between-session banner; real plugin waits on keys |
 | EU-048 Window state | `window.json` restore; practice fullscreen toggle |
-| EU-047 Reminders | Deferred (Could) |
+| EU-047 Reminders | Unparked for engineering (Could); not built yet |
 | EU-049 Matrix + stores | Owner checklist only |
 | EU-050 Orient / Welcome design | Orient extracted; stepper + posture/zones/reach; Library replay; axe smoke |
 | EU-051 Progress / Library / Settings visuals | HubShell side nav; heatmap + crossover; Settings Keyboard/Learning/Access/Data groups |

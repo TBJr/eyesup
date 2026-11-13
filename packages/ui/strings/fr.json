@@ -100,12 +100,44 @@
     "continueCta": "Continuer",
     "toggle": "Les chiffres basculent ; Entree continue",
     "hintKeys": "Appuyez sur 1–4, puis Entree",
-    "back": "Retour"
+    "back": "Retour",
+    "q1Prompt": "Que tapez-vous le plus souvent ?",
+    "q1o1": "Ecrits et emails",
+    "q1o2": "Code",
+    "q1o3": "Chiffres et donnees",
+    "q1o4": "Un peu de tout",
+    "q2Prompt": "Comment tapez-vous aujourd'hui ?",
+    "q2o1": "Un ou deux doigts, je regarde chaque touche",
+    "q2o2": "Plusieurs doigts, je regarde souvent",
+    "q2o3": "Je tape les lettres a l'aveugle mais regarde chiffres et symboles",
+    "q2o4": "Je tape tout a l'aveugle",
+    "q3Prompt": "Avez-vous deja appris la dactylo ?",
+    "q3o1": "Jamais",
+    "q3o2": "Un peu",
+    "q3o3": "Un cours complet",
+    "q3o4": "Je l'enseigne",
+    "q4Prompt": "Combien de minutes par jour pouvez-vous pratiquer ?",
+    "q4o1": "5",
+    "q4o2": "12",
+    "q4o3": "20",
+    "q5Prompt": "Quel clavier utilisez-vous le plus ?",
+    "q5o1": "Portable",
+    "q5o2": "Plein format",
+    "q5o3": "Secare / ergonomique",
+    "q5o4": "Je ne sais pas",
+    "q6Prompt": "Besoins d'accessibilite ? (basculez avec les chiffres)",
+    "q6o1": "Texte plus grand",
+    "q6o2": "Contraste eleve",
+    "q6o3": "Mouvement reduit",
+    "q6o4": "Une main gauche",
+    "q6o5": "Une main droite",
+    "q6o6": "Sans son"
   },
   "probeA": {
     "title": "Tapez normalement pendant 45 secondes",
     "eyebrow": "Test de frappe 1",
     "hint": "Regardez l'ecran. Tapez comme d'habitude.",
+    "countdown": "{seconds}s restantes",
     "passage": "le renard brun agile saute par dessus le chien paresseux et continue avec des mains stables sur la rangee de base aujourd hui"
   },
   "probeB": {
@@ -114,6 +146,7 @@
     "home": "Appuyez sur la touche du doigt surligne.",
     "blind": "Clavier cache — tapez au feeling.",
     "homeLabel": "Controle de base",
+    "countdown": "{seconds}s restantes",
     "passage": "ligne de frappe a l aveugle avec des mots courants pour le test"
   },
   "layouts": {
@@ -135,6 +168,7 @@
     "override": "Choisir un autre parcours",
     "continue": "Appuyez sur Entree pour continuer",
     "startOrient": "Demarrer Orient · 4 min",
+    "startPractice": "Commencer la pratique",
     "startElsewhere": "Commencer ailleurs"
   },
   "today": {
@@ -173,12 +207,25 @@
     "unlockStart": "Appuyez sur Entree pour pratiquer",
     "break": "Temps pour une courte pause",
     "breakSkip": "Appuyez sur Entree pour passer",
+    "breakCountdown": "{seconds}s restantes — ou Entree pour passer",
     "done": "Termine — retour a Aujourd'hui",
     "wpm": "MPM",
     "accuracy": "Precision",
     "slowest": "Touche la plus lente",
+    "slowestPair": "Paire la plus lente",
+    "guideChange": "{key} guide N{from}→N{to}",
+    "eyesUpEarned": "Points yeux leves cette session",
+    "noGuideChanges": "Aucun changement de guide cette session",
     "notStarted": "Pas encore de session. Commencez depuis Aujourd'hui.",
-    "backToToday": "Retour a Aujourd'hui"
+    "backToToday": "Retour a Aujourd'hui",
+    "timedRemaining": "{seconds}s restantes",
+    "blindCountdown": "Test aveugle · {seconds}s",
+    "metronomeHint": "Suivez le rythme",
+    "unlockReplay": "Tab pour revoir · Entree pour continuer",
+    "ghostRace": "Course fantome",
+    "ghostRaceStart": "Battez votre meilleur essai",
+    "coderPractice": "Extraits de code",
+    "numbersPractice": "Exercices chiffres"
   },
   "progress": {
     "title": "Progres",
@@ -189,7 +236,9 @@
     "noSessions": "Pas encore de session",
     "noMilestones": "Les jalons apparaissent avec la pratique",
     "crossover": "Croisement",
-    "eyesUpPoints": "Points yeux leves"
+    "eyesUpPoints": "Points yeux leves",
+    "sessionLine": "{wpm} {wpmLabel} · {accuracy}%",
+    "milestoneLine": "{id} — {date}"
   },
   "library": {
     "title": "Bibliotheque",
@@ -202,7 +251,15 @@
     "ownTextDelete": "Supprimer",
     "ownTextEmpty": "Aucun texte enregistre",
     "timedTest": "Test chronometre",
-    "timedTestStart": "Demarrer un test d'une minute"
+    "timedTestStart": "Demarrer un test d'une minute",
+    "coder": "Extraits de code",
+    "coderStart": "Pratiquer un extrait de code",
+    "coderHint": "Crochets et vrais extraits de votre couche Code",
+    "numbers": "Exercices chiffres",
+    "numbersStart": "Pratiquer la rangee des chiffres",
+    "numbersHint": "Exercices chiffres de votre couche Nombres",
+    "ghostRace": "Course fantome",
+    "ghostRaceHint": "Courez contre votre meilleur parcours sur le meme texte"
   },
   "settings": {
     "title": "Reglages",
@@ -210,6 +267,10 @@
     "groupLearning": "Apprentissage",
     "groupAccess": "Acces et affichage",
     "groupData": "Vos donnees",
+    "reminder": "Rappel quotidien",
+    "reminderOff": "Desactive",
+    "reminderTime": "Heure du rappel",
+    "reminderHint": "Facultatif. Bureau seulement. Aucun les jours de repos.",
     "layout": "Disposition",
     "track": "Parcours",
     "trackKeepProgress": "La progression des touches est gardee si le parcours change",
@@ -233,6 +294,10 @@
     "fingerMapOneHandRight": "Une main (droite)",
     "fingerMapReduced": "Moins de doigts",
     "dyslexiaFont": "Espacement pour la dyslexie"
+  },
+  "reminder": {
+    "title": "C'est l'heure d'EyesUp",
+    "body": "Quelques minutes de pratique gardent votre serie."
   },
   "device": {
     "title": "EyesUp a besoin d'un clavier",
